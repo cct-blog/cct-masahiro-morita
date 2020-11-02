@@ -13,9 +13,7 @@ namespace blazorTest.Server.Models
         public int CreatedRoomCount { get; set; }
         [MaxLength(20)]
         public string HandleName { get; set; }
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime CreateDate { get; set; }
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime UpdateDate { get; set; }
         public List<Post> Posts { get; set; }
         public List<Thread> Threads { get; set; }
