@@ -9,7 +9,7 @@ namespace blazorTest.Server.Models
     {
         public Guid Id { get; set; }
         public Guid RoomId { get; set; }
-        public ApplicationUser UserId { get; set; }
+        public string ApplicationUserId { get; set; }
         public DateTime LatestAccessDate { get; set; }
     }
 }

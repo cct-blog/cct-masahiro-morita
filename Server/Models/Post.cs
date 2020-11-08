@@ -10,15 +10,16 @@ namespace blazorTest.Server.Models
     public class Post
     {
         public Guid Id { get; set; }
-        public ApplicationUser UserId { get; set; }
+        public string ApplicationUserId { get; set; }
         public Guid RoomId { get; set; }
+
         [MaxLength(200)]
         public string Text { get; set; }
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime CreateDate { get; set; }
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public DateTime UpdateDate { get; set; }
-        public List<Thread> Threads { get; set; }
 
+        public DateTime CreateDate { get; set; }
+
+        public DateTime UpdateDate { get; set; }
+
+        public List<Thread> Threads { get; set; }
     }
 }
