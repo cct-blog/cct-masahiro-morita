@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Models
 {
-    public class Post
+    public class Post : ICreateAndUpdateDate
     {
         public Guid Id { get; set; }
         public string ApplicationUserId { get; set; }

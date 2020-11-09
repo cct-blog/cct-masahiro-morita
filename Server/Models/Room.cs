@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Models
 {
-    public class Room
+    public class Room : ICreateAndUpdateDate
     {
         public Guid Id { get; set; }
 

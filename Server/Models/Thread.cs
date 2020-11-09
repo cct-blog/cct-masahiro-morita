@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Models
 {
-    public class Thread
+    public class Thread : ICreateAndUpdateDate
     {
         public Guid Id { get; set; }
         public string ApplicationUserId { get; set; }
@@ -16,10 +16,8 @@ namespace blazorTest.Server.Models
         [MaxLength(200)]
         public string Text { get; set; }
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime CreateDate { get; set; }
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime UpdateDate { get; set; }
     }
 }
