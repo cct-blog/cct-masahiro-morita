@@ -11,7 +11,6 @@ namespace blazorTest.Server.Services
     {
         private readonly ApplicationDbContext _context;
 
-
         public PostService(ApplicationDbContext context)
         {
             _context = context;
@@ -20,7 +19,7 @@ namespace blazorTest.Server.Services
         public List<Post> ReadPostWhenWindowOpened(Guid roomId, string userId)
         {
             var lastAccesseDate = _context.UserInfoInRooms
-                .Single(_userInfoInRooms => _userInfoInRooms.UserId.Equals(userId) && _userInfoInRooms.RoomId.Equals(roomId))
+                .Single(_userInfoInRooms => _userInfoInRooms.ApplicationUserId.Equals(userId) && _userInfoInRooms.RoomId.Equals(roomId))
                 .LatestAccessDate;
 
             var posts = _context.Posts
@@ -28,7 +27,7 @@ namespace blazorTest.Server.Services
                 .Where(_post => _post.CreateDate > lastAccesseDate)
                 .ToList();
 
-            return posts
+            return posts;
         }
     }
 }
