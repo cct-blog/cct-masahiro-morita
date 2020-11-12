@@ -16,15 +16,12 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public List<Post> ReadPostWhenWindowOpened(Guid roomId, string userId)
+        public List<Post> ReadPostWhenWindowOpened(Guid roomId, DateTime needMessageTailDate, int MessageCount)
         {
-            var lastAccesseDate = _context.UserInfoInRooms
-                .Single(_userInfoInRooms => _userInfoInRooms.ApplicationUserId.Equals(userId) && _userInfoInRooms.RoomId.Equals(roomId))
-                .LatestAccessDate;
-
             var posts = _context.Posts
                 .Where(_post => _post.RoomId.Equals(roomId))
-                .Where(_post => _post.CreateDate > lastAccesseDate)
+                .Where(_post => _post.CreateDate < needMessageTailDate)
+                .TakeLast(MessageCount)
                 .ToList();
 
             return posts;

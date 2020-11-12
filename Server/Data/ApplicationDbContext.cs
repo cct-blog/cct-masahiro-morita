@@ -35,7 +35,7 @@ namespace blazorTest.Server.Data
                 .Where(entry => entry.State == EntityState.Added))
             {
                 var createEntity = entityEntry.Entity as ICreateAndUpdateDate;
-                if (createEntity is null)
+                if (!(createEntity is null))
                 {
                     createEntity.CreateDate = DateTime.Now;
                     createEntity.UpdateDate = DateTime.Now;
@@ -46,7 +46,7 @@ namespace blazorTest.Server.Data
                 .Where(entry => entry.State == EntityState.Modified))
             {
                 var updateEntity = entityEntry.Entity as ICreateAndUpdateDate;
-                if (updateEntity is null) updateEntity.UpdateDate = DateTime.Now;
+                if (!(updateEntity is null)) updateEntity.UpdateDate = DateTime.Now;
             }
         }
     }
