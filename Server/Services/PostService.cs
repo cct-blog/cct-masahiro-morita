@@ -21,6 +21,7 @@ namespace blazorTest.Server.Services
             var posts = _context.Posts
                 .Where(_post => _post.RoomId.Equals(roomId))
                 .Where(_post => _post.CreateDate < needMessageTailDate)
+                .ToList()
                 .TakeLast(MessageCount)
                 .ToList();
 

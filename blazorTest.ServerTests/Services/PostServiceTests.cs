@@ -37,7 +37,7 @@ namespace blazorTest.Server.Services.Tests
 
                     var result = service.ReadPostWhenWindowOpened(roomId, DateTime.Now, 50);
 
-                    Assert.AreEqual("data1", result[0].Text);
+                    Assert.AreEqual(50, result.Count);
                 }
             }
         }
