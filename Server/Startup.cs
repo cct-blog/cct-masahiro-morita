@@ -14,6 +14,7 @@ using System.Linq;
 using blazorTest.Server.Data;
 using blazorTest.Server.Models;
 using blazorTest.Server.Hubs;
+using blazorTest.Server.Services;
 
 namespace blazorTest.Server
 {
@@ -39,6 +40,8 @@ namespace blazorTest.Server
 
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+
+            services.AddScoped<RoomService>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();

@@ -1,0 +1,39 @@
+﻿@page "/chatRoom"
+@using Microsoft.AspNetCore.Authorization
+@using blazorTest.Shared.Models
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+@attribute [Authorize]
+
+<AuthorizeView>
+    <Authorized>
+        @{ userEmail = context.User.Identity.Name;}
+        <h1>Room</h1>
+        <ul id="roomList">
+            @if (rooms is null)
+            {
+                <li>loading</li>
+            }
+            else
+            {
+                @foreach (var room in rooms)
+                {
+                    <li><a href="Counter">@room</a></li>
+                }
+            }
+        </ul>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private string userEmail;
+
+    private List<UserRoom> rooms;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var content = new FormUrlEncodedContent(new Dictionary<string, string> { { "userId", "a@b" } });
+        rooms = await HttpClient
+            .GetFromJsonAsync<List<UserRoom>>("Room");
+    }
+}
