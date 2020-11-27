@@ -15,6 +15,7 @@ using blazorTest.Server.Data;
 using blazorTest.Server.Models;
 using blazorTest.Server.Hubs;
 using blazorTest.Server.Services;
+using IdentityServer4.Services;
 
 namespace blazorTest.Server
 {
@@ -36,10 +37,13 @@ namespace blazorTest.Server
                     Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddClaimsPrincipalFactory<CustomUserClaimsPrincipalFactory>();
 
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+
+            services.AddTransient<IProfileService, ClaimsFilterProfileService>();
 
             services.AddScoped<RoomService>();
 
