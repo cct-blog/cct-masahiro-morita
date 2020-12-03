@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Services
 {
-    public class PostService
+    public class PostService : IService
     {
         private readonly ApplicationDbContext _context;
 
