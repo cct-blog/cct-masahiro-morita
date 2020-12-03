@@ -32,7 +32,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var content = new FormUrlEncodedContent(new Dictionary<string, string> { { "userId", "a@b" } });
         rooms = await HttpClient
             .GetFromJsonAsync<List<UserRoom>>("Room");
     }
