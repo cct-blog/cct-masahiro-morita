@@ -45,7 +45,8 @@ namespace blazorTest.Server
 
             services.AddTransient<IProfileService, ClaimsFilterProfileService>();
 
-            services.AddScoped<RoomService>();
+            services.AddTransient<RoomService>();
+            services.AddTransient<PostService>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();

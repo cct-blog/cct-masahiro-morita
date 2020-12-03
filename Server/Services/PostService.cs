@@ -16,7 +16,7 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public List<Post> ReadPostWhenWindowOpened(Guid roomId, DateTime needMessageTailDate, int MessageCount)
+        public List<Post> ReadPostWhenWindowOpened(Guid roomId, DateTime needMessageTailDate, int MessageCount = 50)
         {
             var posts = _context.Posts
                 .Where(_post => _post.RoomId.Equals(roomId))
