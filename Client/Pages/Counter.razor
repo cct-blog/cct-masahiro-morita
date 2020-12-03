@@ -1,13 +1,16 @@
 ﻿@page "/counter"
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
+@using blazorTest.Shared;
+@using blazorTest.Shared.Models;
 @inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @attribute [Authorize]
 @implements IDisposable
 
 <AuthorizeView>
     <Authorized>
-        @{ userEmail = context.User.Identity.Name;}
         <div class="form-group">
             <label>
                 Message:
@@ -32,9 +35,9 @@
 
     private List<string> messages = new List<string>();
 
-    private string userEmail;
     private string messageInput;
-    private Guid roomId = new Guid("30677F2A-5615-4D11-3639-08D888932F58"); //TODO 動作確認用
+    private Guid roomId =
+        new Guid("30677F2A-5615-4D11-3639-08D888932F58"); //TODO 動作確認用
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,19 +45,32 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"))
             .Build();
 
-        hubConnection.On<string, string, string>("ReceiveMessage", (handleName, user, message) =>
-        {
-            var encodedMsg = $"{handleName}: {message}";
-            messages.Add(encodedMsg);
-            StateHasChanged();
-        });
+        hubConnection.On<Message>(
+            SignalRMehod.receiveMessage, (message) =>
+            {
+                var encodedMsg = $"{message.handleName}: {message.messageContext}";
+                messages.Add(encodedMsg);
+                StateHasChanged();
+            });
 
         await hubConnection.StartAsync();
 
     }
 
-    Task Send() =>
-        hubConnection.SendAsync("SendMessage", userEmail, messageInput, roomId);
+    async Task Send()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var message = new Message()
+        {
+            userEmail = authState.User.Identity.Name,
+            messageContext = messageInput,
+            roomId = roomId
+        };
+
+        await hubConnection.SendAsync(
+            SignalRMehod.sendMessage, message);
+    }
 
     public bool IsConnected =>
         hubConnection.State == HubConnectionState.Connected;
