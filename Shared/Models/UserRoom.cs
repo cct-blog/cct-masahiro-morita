@@ -2,13 +2,10 @@
 
 namespace blazorTest.Shared.Models
 {
-    public class UserRoom
+    public record UserRoom
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
-        public string Name { get; set; }
-
-        public DateTime CreateDate { get; set; }
-        public DateTime UpdateDate { get; set; }
+        public string Name { get; init; }
     }
 }
