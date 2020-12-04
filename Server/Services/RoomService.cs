@@ -18,12 +18,14 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public List<Room> ReadRoomListOfUser(string userId)
+        public List<UserRoom> ReadRoomListOfUser(string userId)
         {
             return _context.Rooms
                 .Include(room => room.UserInfoInRooms
                     .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId))
+                .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
                 .ToList();
+
         }
     }
 }

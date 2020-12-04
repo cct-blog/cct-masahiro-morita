@@ -1,5 +1,6 @@
 ﻿using blazorTest.Server.Models;
 using blazorTest.Server.Services;
+using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,7 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet]
-        public List<Room> Get()
+        public List<UserRoom> Get()
         {
             var userEmail = User.Identity.Name;
             return _roomService.ReadRoomListOfUser(userEmail);
