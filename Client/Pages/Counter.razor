@@ -1,4 +1,4 @@
-﻿@page "/counter"
+﻿@page "/counter/{roomId:guid}"
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
 @using blazorTest.Shared;
@@ -36,8 +36,9 @@
     private List<string> messages = new List<string>();
 
     private string messageInput;
-    private Guid roomId =
-        new Guid("30677F2A-5615-4D11-3639-08D888932F58"); //TODO 動作確認用
+
+    [Parameter]
+    public Guid roomId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
