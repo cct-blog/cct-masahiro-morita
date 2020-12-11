@@ -9,5 +9,7 @@ namespace blazorTest.Server.Models
     {
         DateTime CreateDate { get; set; }
         DateTime UpdateDate { get; set; }
+
+        public void UpdateNow() => CreateDate = UpdateDate = DateTime.Now;
     }
 }

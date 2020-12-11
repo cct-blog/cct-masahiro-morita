@@ -37,7 +37,7 @@ namespace blazorTest.ServerTests.ContextBase
                 new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlServer(Connection).Options,
                 Options.Create(new OperationalStoreOptions()));
 
-            if (transaction != null)
+            if (transaction is not null)
             {
                 context.Database.UseTransaction(transaction);
             }
@@ -59,18 +59,22 @@ namespace blazorTest.ServerTests.ContextBase
                         Enumerable.Range(1, 4)
                             .Select(index =>
                             {
-                                var applicationUser = new ApplicationUser();
-                                applicationUser.Id = "a@b" + index.ToString();
-                                applicationUser.PasswordHash = "test@test.com";
-                                applicationUser.SecurityStamp = Guid.NewGuid().ToString();
+                                var applicationUser = new ApplicationUser()
+                                {
+                                    Id = "a@b" + index.ToString(),
+                                    PasswordHash = "test@test.com",
+                                    SecurityStamp = Guid.NewGuid().ToString()
+                                };
                                 context.Users.Add(applicationUser);
 
-                                var room = new Room();
-                                room.Name = "room" + index.ToString();
+                                var room = new Room()
+                                {
+                                    Name = "room" + index.ToString()
+                                };
                                 context.Rooms.Add(room);
 
                                 return "";
-                            }).ToList();
+                            }).ToArray();
                         context.SaveChanges();
 
                         var rooms = context.Rooms.ToList();
@@ -85,13 +89,15 @@ namespace blazorTest.ServerTests.ContextBase
                         Enumerable.Range(1, 100)
                             .Select(index =>
                             {
-                                var post = new Post();
-                                post.ApplicationUserId = "a@b2";
-                                post.RoomId = rooms.Where(room => room.Name == "room1").Single().Id;
-                                post.Text = "data" + index.ToString();
+                                var post = new Post()
+                                {
+                                    ApplicationUserId = "a@b2",
+                                    RoomId = rooms.Where(room => room.Name == "room1").Single().Id,
+                                    Text = "data" + index.ToString()
+                                };
                                 context.Posts.Add(post);
                                 return post;
-                            }).ToList();
+                            }).ToArray();
                         context.SaveChanges();
                     }
 
@@ -102,9 +108,11 @@ namespace blazorTest.ServerTests.ContextBase
 
         private void RegisterUserInfoInRoom(ApplicationDbContext context, string userId, Guid roomId)
         {
-            var userInfoInRoom = new UserInfoInRoom();
-            userInfoInRoom.ApplicationUserId = userId;
-            userInfoInRoom.RoomId = roomId;
+            var userInfoInRoom = new UserInfoInRoom()
+            {
+                ApplicationUserId = userId,
+                RoomId = roomId
+            };
             context.UserInfoInRooms.Add(userInfoInRoom);
         }
 

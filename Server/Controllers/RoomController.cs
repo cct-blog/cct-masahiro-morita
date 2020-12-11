@@ -27,7 +27,7 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet]
-        public List<UserRoom> Get()
+        public IEnumerable<UserRoom> Get()
         {
             var userEmail = User.Identity.Name;
             return _roomService.ReadRoomListOfUser(userEmail);

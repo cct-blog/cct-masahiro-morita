@@ -17,21 +17,19 @@ namespace blazorTest.Server.Hubs
         public async Task SendMessage(Message message)
         {
             var user = _context.Users
-                .Where(user => user.Email == message.userEmail)
+                .Where(user => user.Email == message.UserEmail)
                 .Single();
 
             var post = new Post()
             {
                 ApplicationUserId = user.Id,
-                Text = message.messageContext,
-                RoomId = message.roomId
+                Text = message.MessageContext,
+                RoomId = message.RoomId
             };
             _context.Posts.Add(post);
             _context.SaveChanges();
 
-            message.handleName ??= user.HandleName;
-
-            await Clients.All.SendAsync(SignalRMehod.receiveMessage, message);
+            await Clients.All.SendAsync(SignalRMehod.ReceiveMessage, message);
         }
     }
 }

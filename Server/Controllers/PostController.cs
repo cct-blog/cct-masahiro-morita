@@ -25,7 +25,7 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet]
-        public List<Dictionary<string, string>> Get()
+        public IEnumerable<Dictionary<string, string>> Get()
         {
             return new List<Dictionary<string, string>>();
         }

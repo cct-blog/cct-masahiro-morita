@@ -34,12 +34,7 @@ namespace blazorTest.Server.Data
             foreach (var entityEntry in ChangeTracker.Entries()
                 .Where(entry => entry.State == EntityState.Added))
             {
-                var createEntity = entityEntry.Entity as ICreateAndUpdateDate;
-                if (createEntity is not null)
-                {
-                    createEntity.CreateDate = DateTime.Now;
-                    createEntity.UpdateDate = DateTime.Now;
-                }
+                (entityEntry.Entity as ICreateAndUpdateDate)?.UpdateNow();
             }
 
             foreach (var entityEntry in ChangeTracker.Entries()
