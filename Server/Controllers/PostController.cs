@@ -11,7 +11,7 @@ namespace blazorTest.Server.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("[controller")]
+    [Route("[controller]")]
     public class PostController
     {
         private readonly ILogger<PostController> _logger;

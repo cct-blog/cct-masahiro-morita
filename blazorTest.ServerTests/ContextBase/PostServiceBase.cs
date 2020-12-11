@@ -24,7 +24,7 @@ namespace blazorTest.ServerTests.ContextBase
 
         public PostServiceBase()
         {
-            Connection = new SqlConnection(@"Server=(localdb)\MSSQLLocalDB;Database=study;Trusted_Connection=True;");
+            Connection = new SqlConnection(@"Server=localhost\SQLEXPRESS;Database=study;Trusted_Connection=True;");
 
             Seed();
 

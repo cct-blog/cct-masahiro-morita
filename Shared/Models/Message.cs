@@ -2,14 +2,14 @@
 
 namespace blazorTest.Shared.Models
 {
-    public class Message
+    public record Message
     {
-        public string userEmail { get; set; }
+        public string userEmail { get; init; }
 
-        public string handleName { get; set; }
+        public string handleName { get; init; }
 
-        public string messageContext { get; set; }
+        public string messageContext { get; init; }
 
-        public Guid roomId { get; set; }
+        public Guid roomId { get; init; }
     }
 }

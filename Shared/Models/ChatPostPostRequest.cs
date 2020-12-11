@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Shared.Models
 {
-    public class ChatPostPostRequest
+    public record ChatPostPostRequest
     {
-        public Guid roomId { get; set; }
+        public Guid roomId { get; init; }
 
-        public DateTime needMessageTailDate { get; set; }
+        public DateTime needMessageTailDate { get; init; }
 
-        public int MessageCount { get; set; }
+        public int MessageCount { get; init; }
     }
 }
