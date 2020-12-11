@@ -8,9 +8,9 @@ namespace blazorTest.Shared.Models
 {
     public record ChatPostPostRequest
     {
-        public Guid roomId { get; init; }
+        public Guid RoomId { get; init; }
 
-        public DateTime needMessageTailDate { get; init; }
+        public DateTime NeedMessageTailDate { get; init; }
 
         public int MessageCount { get; init; }
     }

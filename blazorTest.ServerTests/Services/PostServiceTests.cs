@@ -24,22 +24,19 @@ namespace blazorTest.Server.Services.Tests
         [TestMethod()]
         public void ReadPostWhenWindowOpenedTest()
         {
-            using (var transaction = Fixture.Connection.BeginTransaction())
-            {
-                using (var context = Fixture.CreateContext(transaction))
-                {
-                    var roomId = context.Rooms
-                        .Where(room => room.Name == "room1")
-                        .Single()
-                        .Id;
+            using var transaction = Fixture.Connection.BeginTransaction();
+            using var context = Fixture.CreateContext(transaction);
 
-                    var service = new PostService(context);
+            var roomId = context.Rooms
+                .Where(room => room.Name == "room1")
+                .Single()
+                .Id;
 
-                    var result = service.ReadPostWhenWindowOpened(roomId, DateTime.Now, 50);
+            var service = new PostService(context);
 
-                    Assert.AreEqual(50, result.Count);
-                }
-            }
+            var result = service.ReadPostWhenWindowOpened(roomId, DateTime.Now, 50);
+
+            Assert.AreEqual(50, result.Count());
         }
     }
 }

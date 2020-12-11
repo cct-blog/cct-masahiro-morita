@@ -2,8 +2,8 @@
 {
     public static class SignalRMehod
     {
-        public static readonly string receiveMessage = "ReceiveMessage";
+        public const string ReceiveMessage = nameof(ReceiveMessage);
 
-        public static readonly string sendMessage = "SendMessage";
+        public const string SendMessage = nameof(SendMessage);
     }
 }

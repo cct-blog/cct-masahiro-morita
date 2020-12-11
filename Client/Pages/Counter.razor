@@ -50,9 +50,9 @@
             .Build();
 
         hubConnection.On<Message>(
-            SignalRMehod.receiveMessage, (message) =>
+            SignalRMehod.ReceiveMessage, (message) =>
             {
-                var encodedMsg = $"{message.handleName}: {message.messageContext}";
+                var encodedMsg = $"{message.HandleName}: {message.MessageContext}";
                 messages.Add(encodedMsg);
                 StateHasChanged();
             });
@@ -60,13 +60,13 @@
         await hubConnection.StartAsync();
 
         var nowDate = DateTime.Now;
-        var request = new ChatPostPostRequest() { roomId = roomId, needMessageTailDate = nowDate };
+        var request = new ChatPostPostRequest() { RoomId = roomId, NeedMessageTailDate = nowDate };
 
         var response = await HttpClient
             .PostAsJsonAsync<ChatPostPostRequest>("GetPost", request);
 
         chatPosts = await response.Content
-            .ReadFromJsonAsync<List<Dictionary<String, string>>>();
+            .ReadFromJsonAsync<List<Dictionary<string, string>>>();
 
     }
 
@@ -76,13 +76,14 @@
 
         var message = new Message()
         {
-            userEmail = authState.User.Identity.Name,
-            messageContext = messageInput,
-            roomId = roomId
+            UserEmail = authState.User.Identity.Name,
+            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
+            MessageContext = messageInput,
+            RoomId = roomId
         };
 
         await hubConnection.SendAsync(
-            SignalRMehod.sendMessage, message);
+            SignalRMehod.SendMessage, message);
     }
 
     public bool IsConnected =>
