@@ -23,7 +23,8 @@ namespace blazorTest.Server.Services
             return _context.Rooms
                 .Include(room => room.UserInfoInRooms
                     .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId))
-                .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name });
+                .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
+                .ToArray();
         }
     }
 }

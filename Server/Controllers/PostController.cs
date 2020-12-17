@@ -1,4 +1,5 @@
 ﻿using blazorTest.Server.Services;
+using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -24,10 +25,13 @@ namespace blazorTest.Server.Controllers
             _postService = postService;
         }
 
-        [HttpGet]
-        public IEnumerable<Dictionary<string, string>> Get()
+        [HttpPost]
+        public IEnumerable<Message> Post(
+            [FromBody] ChatPostPostRequest requestBody)
         {
-            return new List<Dictionary<string, string>>();
+            var messages = _postService.ReadPostWhenWindowOpened(
+                requestBody.RoomId, requestBody.NeedMessageTailDate);
+            return messages;
         }
     }
 }

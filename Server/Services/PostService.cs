@@ -1,5 +1,6 @@
 ﻿using blazorTest.Server.Data;
 using blazorTest.Server.Models;
+using blazorTest.Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,13 +17,15 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public IEnumerable<Post> ReadPostWhenWindowOpened(Guid roomId, DateTime needMessageTailDate, int MessageCount = 50)
+        public IEnumerable<Message> ReadPostWhenWindowOpened(Guid roomId, DateTime needMessageTailDate, int MessageCount = 50)
         {
             var posts = _context.Posts
                 .Where(_post => _post.RoomId.Equals(roomId))
                 .Where(_post => _post.CreateDate < needMessageTailDate)
                 .ToList()
-                .TakeLast(MessageCount);
+                .TakeLast(MessageCount)
+                .Select(_post => new Message() { RoomId = roomId, MessageContext = _post.Text })
+                .ToArray();
 
             return posts;
         }

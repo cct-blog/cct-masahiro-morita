@@ -23,9 +23,9 @@
         <hr />
 
         <ul id="messageList">
-            @foreach (var chatPost in chatPosts)
+            @foreach (var message in messages)
             {
-                <li>@chatPost.Keys : @chatPost.Values</li>
+                <li>@message.HandleName : @message.MessageContext</li>
             }
         </ul>
     </Authorized>
@@ -34,9 +34,7 @@
 @code {
     private HubConnection hubConnection;
 
-    private List<string> messages = new List<string>();
-    private List<Dictionary<string, string>> chatPosts =
-        new List<Dictionary<string, string>>();
+    private List<Message> messages = new List<Message>();
 
     private string messageInput;
 
@@ -52,8 +50,7 @@
         hubConnection.On<Message>(
             SignalRMehod.ReceiveMessage, (message) =>
             {
-                var encodedMsg = $"{message.HandleName}: {message.MessageContext}";
-                messages.Add(encodedMsg);
+                messages.Add(message);
                 StateHasChanged();
             });
 
@@ -63,10 +60,10 @@
         var request = new ChatPostPostRequest() { RoomId = roomId, NeedMessageTailDate = nowDate };
 
         var response = await HttpClient
-            .PostAsJsonAsync<ChatPostPostRequest>("GetPost", request);
+            .PostAsJsonAsync<ChatPostPostRequest>("Post", request);
 
-        chatPosts = await response.Content
-            .ReadFromJsonAsync<List<Dictionary<string, string>>>();
+        messages = await response.Content
+            .ReadFromJsonAsync<List<Message>>();
 
     }
 
