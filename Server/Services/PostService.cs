@@ -1,6 +1,7 @@
 ﻿using blazorTest.Server.Data;
 using blazorTest.Server.Models;
 using blazorTest.Shared.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,17 +18,20 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public IEnumerable<Message> ReadPostWhenWindowOpened(Guid roomId, DateTime needMessageTailDate, int MessageCount = 50)
-        {
-            var posts = _context.Posts
-                .Where(_post => _post.RoomId.Equals(roomId))
-                .Where(_post => _post.CreateDate < needMessageTailDate)
-                .ToList()
-                .TakeLast(MessageCount)
-                .Select(_post => new Message() { RoomId = roomId, MessageContext = _post.Text })
-                .ToArray();
-
-            return posts;
-        }
+        public IEnumerable<Message> ReadPostWhenWindowOpened(
+            Guid roomId, DateTime needMessageTailDate, int MessageCount = 50)
+        => _context.Posts
+                .Where(_post => _post.RoomId.Equals(roomId)
+                    && _post.CreateDate < needMessageTailDate)
+                .Include(_post => _post.ApplicationUser)
+                .AsEnumerable()
+                .Reverse()
+                .Take(MessageCount)
+                .Select(_post => new Message()
+                {
+                    RoomId = roomId,
+                    MessageContext = _post.Text,
+                    HandleName = _post.ApplicationUser.HandleName
+                });
     }
 }

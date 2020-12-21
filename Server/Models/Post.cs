@@ -10,7 +10,11 @@ namespace blazorTest.Server.Models
     public class Post : ICreateAndUpdateDate
     {
         public Guid Id { get; set; }
+
         public string ApplicationUserId { get; set; }
+
+        public ApplicationUser ApplicationUser { get; set; }
+
         public Guid RoomId { get; set; }
 
         [MaxLength(200)]
