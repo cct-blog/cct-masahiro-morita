@@ -18,6 +18,6 @@ namespace blazorTest.Shared.Models
 
         public DateTime LastAccessedDate { get; init; }
 
-        public List<Guid> UserId { get; init; }
+        public List<string> UserName { get; init; }
     }
 }

@@ -32,5 +32,8 @@ namespace blazorTest.Server.Controllers
             var userEmail = User.Identity.Name;
             return _roomService.ReadRoomListOfUser(userEmail);
         }
+
+        [HttpGet("{roomId:guid}")]
+        public RoomDetail GetRoomDetail(Guid roomId) => _roomService.ReadRoomDetail(roomId);
     }
 }

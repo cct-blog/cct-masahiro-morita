@@ -24,7 +24,23 @@ namespace blazorTest.Server.Services
                 .Include(room => room.UserInfoInRooms
                     .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId))
                 .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
-                .ToArray();
+                .AsEnumerable();
         }
+
+        internal RoomDetail ReadRoomDetail(Guid roomId) =>
+            _context.Rooms
+                .Where(_room => _room.Id == roomId)
+                .Include(_room => _room.UserInfoInRooms)
+                    .ThenInclude(_userInfoInRooms => _userInfoInRooms.ApplicationUser)
+                .Select(_room => new RoomDetail()
+                {
+                    RoomId = _room.Id,
+                    RoomName = _room.Name,
+                    CreateDate = _room.CreateDate,
+                    UpdateDate = _room.UpdateDate,
+                    UserName = _room.UserInfoInRooms.Select(_m => _m.ApplicationUser.HandleName).ToList()
+                })
+                .AsEnumerable()
+                .First();
     }
 }
