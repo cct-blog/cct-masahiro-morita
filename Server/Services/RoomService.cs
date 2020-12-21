@@ -27,9 +27,8 @@ namespace blazorTest.Server.Services
                 .AsEnumerable();
         }
 
-        internal RoomDetail ReadRoomDetail(Guid roomId) =>
-            _context.Rooms
-                .Where(_room => _room.Id == roomId)
+        private RoomDetail ReadRoomDetail(IQueryable<Room> rooms) =>
+                rooms
                 .Include(_room => _room.UserInfoInRooms)
                     .ThenInclude(_userInfoInRooms => _userInfoInRooms.ApplicationUser)
                 .Select(_room => new RoomDetail()
@@ -42,5 +41,38 @@ namespace blazorTest.Server.Services
                 })
                 .AsEnumerable()
                 .First();
+
+        internal RoomDetail ReadRoomDetailFromId(Guid id)
+        {
+            var roomQuery = _context.Rooms.Where(_room => _room.Id == id);
+            return ReadRoomDetail(roomQuery);
+        }
+
+        internal RoomDetail ReadRoomDetailFromName(string name)
+        {
+            var roomQuery = _context.Rooms.Where(_room => _room.Name == name);
+            return ReadRoomDetail(roomQuery);
+        }
+
+        internal RoomDetail CreateRoom(CreateRoom createRoom)
+        {
+            var userInfoInRooms = createRoom.UserIds
+                .Select(_m => new UserInfoInRoom()
+                {
+                    ApplicationUserId = _m,
+                    LatestAccessDate = DateTime.Now
+                })
+                .ToList();
+
+            _context.Rooms
+                .Add(new Room()
+                {
+                    Name = createRoom.roomName,
+                    UserInfoInRooms = userInfoInRooms
+                });
+            _context.SaveChanges();
+
+            return ReadRoomDetailFromName(createRoom.roomName);
+        }
     }
 }

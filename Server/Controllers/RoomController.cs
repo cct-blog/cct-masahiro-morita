@@ -34,6 +34,9 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet("{roomId:guid}")]
-        public RoomDetail GetRoomDetail(Guid roomId) => _roomService.ReadRoomDetail(roomId);
+        public RoomDetail GetRoomDetail(Guid roomId) => _roomService.ReadRoomDetailFromId(roomId);
+
+        [HttpPost]
+        public RoomDetail CreateRoom([FromBody] CreateRoom createRoom) => _roomService.CreateRoom(createRoom);
     }
 }
