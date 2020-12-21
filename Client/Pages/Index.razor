@@ -1,7 +1,63 @@
-﻿@page "/"
+﻿@using Microsoft.AspNetCore.Authorization
+@using blazorTest.Shared.Models
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+@attribute [Authorize]
+@page "/"
 
-<h1>Hello, world!</h1>
+<AuthorizeView>
+    <Authorized>
+        @{ userEmail = context.User.Identity.Name;}
+        <h3>チャットルームを選択してください</h3>
+        <ul id="roomList">
+            @if (rooms is null)
+            {
+                <li>ルームを読み取り中…</li>
+            }
+            else if (rooms.Count == 0)
+            {
+                <li>ルームがありません</li>
+            }
+            else
+            {
+                @foreach (var room in rooms)
+                {
+                    <li><a href="chat/@room.Id">@room.Name</a></li>
+                }
+            }
+        </ul>
 
-Welcome to your new app.
+        <div>ルーム名 : </div>
+        <input type="text" @bind="newRoomName" />
+        <button @onclick="CreateRoom" disabled="@CanCareateNewRoom">新規ルーム作成</button>
+    </Authorized>
+    <NotAuthorized>
+
+    </NotAuthorized>
+</AuthorizeView>
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+
+@code {
+    private bool CanCareateNewRoom => string.IsNullOrWhiteSpace(newRoomName);
+
+    private string newRoomName = string.Empty;
+
+    private string userEmail;
+
+    private List<UserRoom> rooms;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rooms = await HttpClient
+            .GetFromJsonAsync<List<UserRoom>>("Room");
+    }
+
+    private async Task CreateRoom()
+    {
+        await HttpClient.PostAsJsonAsync<UserRoom>("Room", new UserRoom { Id = Guid.Empty, Name = newRoomName });
+
+        rooms = await HttpClient
+            .GetFromJsonAsync<List<UserRoom>>("Room");
+    }
+}
