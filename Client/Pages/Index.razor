@@ -29,7 +29,7 @@
 
         <div>ルーム名 : </div>
         <input type="text" @bind="newRoomName" />
-        <button @onclick="CreateRoom">新規ルーム作成</button>
+        <button class="btn btn-primary" @onclick="CreateRoom">新規ルーム作成</button>
     </Authorized>
     <NotAuthorized>
 
@@ -39,7 +39,7 @@
 <SurveyPrompt Title="How is Blazor working for you?" />
 
 @code {
-    private bool CanCareateNewRoom => string.IsNullOrWhiteSpace(newRoomName);
+    private bool CanCareateNewRoom => !string.IsNullOrWhiteSpace(newRoomName);
 
     private string newRoomName = string.Empty;
 
@@ -58,7 +58,7 @@
         if (!CanCareateNewRoom)
             return;
 
-        await HttpClient.PostAsJsonAsync<CreateRoom>("Room", new CreateRoom { RoomName = newRoomName, UserIds = new List<string> { userEmail } });
+        var result = await HttpClient.PostAsJsonAsync<CreateRoom>("Room", new CreateRoom { RoomName = newRoomName, UserIds = new List<string> { userEmail } });
 
         rooms = await HttpClient
             .GetFromJsonAsync<List<UserRoom>>("Room");
