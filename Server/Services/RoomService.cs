@@ -55,10 +55,17 @@ namespace blazorTest.Server.Services
 
         internal RoomDetail CreateRoom(CreateRoom createRoom)
         {
-            var userInfoInRooms = createRoom.UserIds
+            var userData = createRoom.UserIds
+                .Select(_userEmail => _context.Users
+                    .Where(_user => _user.Email == _userEmail)
+                    .AsEnumerable()
+                    .First())
+                .ToList();
+
+            var userInfoInRooms = userData
                 .Select(_m => new UserInfoInRoom()
                 {
-                    ApplicationUserId = _m,
+                    ApplicationUserId = _m.Id,
                     LatestAccessDate = DateTime.Now
                 })
                 .ToList();
