@@ -1,13 +1,10 @@
-﻿using blazorTest.Server.Models;
-using blazorTest.Server.Services;
+﻿using blazorTest.Server.Services;
 using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace blazorTest.Server.Controllers
 {
@@ -37,6 +34,6 @@ namespace blazorTest.Server.Controllers
         public RoomDetail GetRoomDetail(Guid roomId) => _roomService.ReadRoomDetailFromId(roomId);
 
         [HttpPost]
-        public RoomDetail CreateRoom([FromBody] CreateRoom createRoom) => _roomService.CreateRoom(createRoom);
+        public RoomDetail CreateRoom(CreateRoom createRoom) => _roomService.CreateRoom(createRoom);
     }
 }

@@ -15,7 +15,7 @@
     <ul class="nav flex-column">
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
+                <span class="oi oi-home" aria-hidden="true"></span> ロビー
             </NavLink>
         </li>
         <AuthorizeView>
@@ -38,17 +38,20 @@
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    private List<UserRoom> rooms = new List<UserRoom>();
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
-    private List<UserRoom> rooms = new List<UserRoom>();
+    protected override async Task OnInitializedAsync() => await UpdateRooms();
 
-    protected override async Task OnInitializedAsync()
+    public async Task OnRoomsChanged() => await UpdateRooms();
+
+    private async Task UpdateRooms()
     {
-        rooms = await HttpClient
-            .GetFromJsonAsync<List<UserRoom>>("Room");
+        rooms = await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room");
     }
 
 }

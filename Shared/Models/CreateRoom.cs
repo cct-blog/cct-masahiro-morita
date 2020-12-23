@@ -8,7 +8,7 @@ namespace blazorTest.Shared.Models
 {
     public record CreateRoom
     {
-        public string roomName { get; init; }
+        public string RoomName { get; init; }
 
         public List<string> UserIds { get; init; }
     }
