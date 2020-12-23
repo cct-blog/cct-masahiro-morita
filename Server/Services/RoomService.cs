@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace blazorTest.Server.Services
 {
@@ -67,12 +66,12 @@ namespace blazorTest.Server.Services
             _context.Rooms
                 .Add(new Room()
                 {
-                    Name = createRoom.roomName,
+                    Name = createRoom.RoomName,
                     UserInfoInRooms = userInfoInRooms
                 });
             _context.SaveChanges();
 
-            return ReadRoomDetailFromName(createRoom.roomName);
+            return ReadRoomDetailFromName(createRoom.RoomName);
         }
     }
 }

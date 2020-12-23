@@ -25,7 +25,7 @@
         <ul id="messageList">
             @foreach (var message in messages)
             {
-                <li>@message.HandleName : @message.MessageContext</li>
+                <PostItem Name="@message.HandleName" Message="@message.MessageContext"/>
             }
         </ul>
     </Authorized>
