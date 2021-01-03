@@ -25,8 +25,8 @@ namespace blazorTest.Server.Services
                     && _post.CreateDate < needMessageTailDate)
                 .Include(_post => _post.ApplicationUser)
                 .AsEnumerable()
-                .Reverse()
-                .Take(MessageCount)
+                .OrderBy(post => post.CreateDate)
+                .TakeLast(MessageCount)
                 .Select(_post => new Message()
                 {
                     RoomId = roomId,

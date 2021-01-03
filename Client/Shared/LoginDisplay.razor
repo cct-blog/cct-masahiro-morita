@@ -6,9 +6,7 @@
 
 <AuthorizeView>
     <Authorized>
-        <a href="authentication/profile">
-            Hello, @(context.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value)!
-        </a>
+        <a href="authentication/profile">@(context.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value)</a>
         <button class="nav-link btn btn-link" @onclick="BeginSignOut">Log out</button>
     </Authorized>
     <NotAuthorized>
