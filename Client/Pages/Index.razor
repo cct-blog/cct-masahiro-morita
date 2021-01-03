@@ -5,38 +5,47 @@
 @attribute [Authorize]
 @page "/"
 
-<AuthorizeView>
-    <Authorized>
-        @{ userEmail = context.User.Identity.Name;}
-        <h3>チャットルームを選択してください</h3>
-        <ul id="roomList">
+<style type="text/css">
+    .margin {
+        margin-bottom: 2px;
+    }
+</style>
+
+<div>
+    <AuthorizeView>
+        <Authorized>
+            @{ userEmail = context.User.Identity.Name;}
             @if (rooms is null)
             {
-                <li>ルームを読み取り中…</li>
+                <div>ルームを読み取り中…</div>
             }
             else if (rooms.Count == 0)
             {
-                <li>ルームがありません</li>
             }
             else
             {
-                @foreach (var room in rooms)
-                {
-                    <li><a href="chat/@room.Id">@room.Name</a></li>
-                }
+                <h4>チャットルームを選択してください</h4>
+                <ul class="nav flex-column">
+                    @foreach (var room in rooms)
+                    {
+                        <li class="nav-item px-3 margin">
+                            <NavLink class="btn btn-secondary" href=@("chat/" + room.Id)>
+                                <span class="oi oi-document" aria-hidden="true"></span>@room.Name
+                            </NavLink>
+                        </li>
+                    }
+                </ul>
             }
-        </ul>
+            <hr />
 
-        <div>ルーム名 : </div>
-        <input type="text" @bind="newRoomName" />
-        <button class="btn btn-primary" @onclick="CreateRoom">新規ルーム作成</button>
-    </Authorized>
-    <NotAuthorized>
+            <h4>新規チャットルームを作成します</h4>
+            <div>ルーム名 : </div>
+            <input type="text" @bind="newRoomName" />
+            <button class="btn btn-primary" @onclick="CreateRoom">新規ルーム作成</button>
+        </Authorized>
+    </AuthorizeView>
 
-    </NotAuthorized>
-</AuthorizeView>
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+</div>
 
 @code {
     private bool CanCareateNewRoom => !string.IsNullOrWhiteSpace(newRoomName);
