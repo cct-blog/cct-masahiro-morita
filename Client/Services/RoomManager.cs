@@ -2,23 +2,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace blazorTest.Server
+namespace blazorTest.Client.Services
 {
     public interface IRoomManager
     {
-        event EventHandler<List<RoomDetail>> RoomChanged;
+        event EventHandler<List<UserRoom>> RoomChanged;
 
-        void RaiseRoomChanged(List<RoomDetail> rooms);
+        void RaiseRoomChanged(object sender, List<UserRoom> rooms);
 
     }
 
     public class RoomManager : IRoomManager
     {
-        public event EventHandler<List<RoomDetail>> RoomChanged;
+        public event EventHandler<List<UserRoom>> RoomChanged;
 
-        public void RaiseRoomChanged(List<RoomDetail> rooms)
+        public void RaiseRoomChanged(object sender, List<UserRoom> rooms)
         {
-            RoomChanged?.Invoke(this, rooms);
+            RoomChanged?.Invoke(sender, rooms);
         }
     }
 }

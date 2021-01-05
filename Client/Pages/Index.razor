@@ -1,7 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using blazorTest.Shared.Models
+@using blazorTest.Client.Services
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
+@inject IRoomManager RoomManager
 @attribute [Authorize]
 @page "/"
 
@@ -58,8 +60,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        rooms = await HttpClient
-            .GetFromJsonAsync<List<UserRoom>>("Room");
+        RoomManager.RoomChanged += (s, e) =>
+        {
+            rooms = e;
+            StateHasChanged();
+        };
+
+        await RefreshRooms();
     }
 
     private async Task CreateRoom()
@@ -69,7 +76,11 @@
 
         var result = await HttpClient.PostAsJsonAsync<CreateRoom>("Room", new CreateRoom { RoomName = newRoomName, UserIds = new List<string> { userEmail } });
 
-        rooms = await HttpClient
-            .GetFromJsonAsync<List<UserRoom>>("Room");
+        await RefreshRooms();
+    }
+
+    private async Task RefreshRooms()
+    {
+        RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
     }
 }
