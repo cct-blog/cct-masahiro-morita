@@ -59,8 +59,18 @@
 
     private string messageInput;
 
+    private Guid _roomId;
+
     [Parameter]
-    public Guid roomId { get; set; }
+    public Guid RoomId
+    {
+        get => _roomId;
+        set
+        {
+            _roomId = value;
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,15 +87,12 @@
 
         await hubConnection.StartAsync();
 
-        var nowDate = DateTime.Now;
-        var request = new ChatPostPostRequest() { RoomId = roomId, NeedMessageTailDate = nowDate };
+        await RefreshAsync();
+    }
 
-        var response = await HttpClient
-            .PostAsJsonAsync<ChatPostPostRequest>("Post", request);
-
-        messages = await response.Content
-            .ReadFromJsonAsync<List<Message>>();
-
+    protected override async Task OnParametersSetAsync()
+    {
+        await RefreshAsync();
     }
 
     async Task Send()
@@ -97,19 +104,27 @@
             UserEmail = authState.User.Identity.Name,
             HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
             MessageContext = messageInput,
-            RoomId = roomId
+            RoomId = RoomId
         };
 
-        await hubConnection.SendAsync(
-            SignalRMehod.SendMessage, message);
+        await hubConnection.SendAsync(SignalRMehod.SendMessage, message);
     }
 
-    public bool IsConnected =>
-        hubConnection.State == HubConnectionState.Connected;
+    private async Task RefreshAsync()
+    {
+        var nowDate = DateTime.Now;
+        var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
+
+
+        var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
+
+        messages = await response.Content.ReadFromJsonAsync<List<Message>>();
+    }
+
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
     public void Dispose()
     {
         _ = hubConnection.DisposeAsync();
     }
-
 }
