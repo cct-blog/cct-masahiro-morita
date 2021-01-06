@@ -6,12 +6,20 @@
 
 <AuthorizeView>
     <Authorized>
-        <a href="authentication/profile">@(context.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value)</a>
-        <button class="nav-link btn btn-link" @onclick="BeginSignOut">Log out</button>
+        <div class="container">
+            <div class="row justify-content-end">
+                <a class="col-2 nav-link btn btn-link" href="authentication/profile">@(context.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value)</a>
+                <button class="col-2 nav-link btn btn-link" @onclick="BeginSignOut">Log out</button>
+            </div>
+        </div>
     </Authorized>
     <NotAuthorized>
-        <a href="authentication/register">Register</a>
-        <a href="authentication/login">Log in</a>
+        <div class="container">
+            <div class="row justify-content-end">
+                <a class="col-2 nav-link btn btn-link" href="authentication/register">Register</a>
+                <a class="col-2 nav-link btn btn-link" href="authentication/login">Log in</a>
+            </div>
+        </div>
     </NotAuthorized>
 </AuthorizeView>
 

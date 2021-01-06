@@ -34,17 +34,16 @@
     <AuthorizeView>
         <Authorized>
             <div class="content">
-                <ul id="messageList">
-                    @foreach (var message in messages)
-                    {
-                        <PostItem Name="@message.HandleName" Message="@message.MessageContext" />
-                    }
-                </ul>
-            </div>
+                @foreach (var message in messages)
+                {
+                    <PostItem Name="@message.HandleName" Message="@message.MessageContext" />
+                }
+                <hr id="end" />
+           </div>
             <div class="form-group" input>
                 <label>
-                    <input @bind="messageInput" size="50" />
-                    <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
+                    <input value="@_messageInput" @oninput="OnInput" size="100" @onkeydown="OnKeyDown" />
+                    <button id="sender" @onclick="Send">Send(Alt+Enter)</button>
                 </label>
             </div>
 
@@ -57,10 +56,36 @@
 
     private List<Message> messages = new List<Message>();
 
-    private string messageInput;
+    private string _messageInput;
+
+    private Guid _roomId;
 
     [Parameter]
-    public Guid roomId { get; set; }
+    public Guid RoomId
+    {
+        get => _roomId;
+        set
+        {
+            _roomId = value;
+            StateHasChanged();
+        }
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        _messageInput = e.Value.ToString();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.AltKey && (e.Code == "Enter" || e.Code == "NumpadEnter"))
+        {
+            if (string.IsNullOrWhiteSpace(_messageInput))
+                return;
+
+            await Send();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,15 +102,12 @@
 
         await hubConnection.StartAsync();
 
-        var nowDate = DateTime.Now;
-        var request = new ChatPostPostRequest() { RoomId = roomId, NeedMessageTailDate = nowDate };
+        await RefreshAsync();
+    }
 
-        var response = await HttpClient
-            .PostAsJsonAsync<ChatPostPostRequest>("Post", request);
-
-        messages = await response.Content
-            .ReadFromJsonAsync<List<Message>>();
-
+    protected override async Task OnParametersSetAsync()
+    {
+        await RefreshAsync();
     }
 
     async Task Send()
@@ -96,20 +118,32 @@
         {
             UserEmail = authState.User.Identity.Name,
             HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
-            MessageContext = messageInput,
-            RoomId = roomId
+            MessageContext = _messageInput,
+            RoomId = RoomId
         };
 
-        await hubConnection.SendAsync(
-            SignalRMehod.SendMessage, message);
+        await hubConnection.SendAsync(SignalRMehod.SendMessage, message);
+
+        _messageInput = string.Empty;
+
+        NavigationManager.NavigateTo($"{NavigationManager.Uri}#end");
     }
 
-    public bool IsConnected =>
-        hubConnection.State == HubConnectionState.Connected;
+    private async Task RefreshAsync()
+    {
+        var nowDate = DateTime.Now;
+        var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
+
+
+        var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
+
+        messages = await response.Content.ReadFromJsonAsync<List<Message>>();
+    }
+
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
     public void Dispose()
     {
         _ = hubConnection.DisposeAsync();
     }
-
 }
