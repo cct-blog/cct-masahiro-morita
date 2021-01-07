@@ -1,11 +1,9 @@
 ﻿using blazorTest.Server.Data;
-using blazorTest.Server.Models;
 using blazorTest.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace blazorTest.Server.Services
 {
@@ -29,6 +27,7 @@ namespace blazorTest.Server.Services
                 .TakeLast(MessageCount)
                 .Select(_post => new Message()
                 {
+                    Id = _post.Id,
                     RoomId = roomId,
                     MessageContext = _post.Text,
                     HandleName = _post.ApplicationUser.HandleName
