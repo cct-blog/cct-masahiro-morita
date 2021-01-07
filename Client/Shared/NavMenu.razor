@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
+@inject IRoomManager RoomManager
 
 <div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">Realtime Chat</a>
@@ -45,13 +46,21 @@
         collapseNavMenu = !collapseNavMenu;
     }
 
-    protected override async Task OnInitializedAsync() => await UpdateRooms();
+    protected override async Task OnInitializedAsync()
+    {
+        RoomManager.RoomChanged += (s, e) =>
+        {
+            rooms = e;
+            StateHasChanged();
+        };
+        await UpdateRooms();
+    }
 
     public async Task OnRoomsChanged() => await UpdateRooms();
 
     private async Task UpdateRooms()
     {
-        rooms = await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room");
+        RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
     }
 
 }

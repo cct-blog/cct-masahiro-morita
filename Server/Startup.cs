@@ -43,7 +43,6 @@ namespace blazorTest.Server
 
             services.AddTransient<RoomService>();
             services.AddTransient<PostService>();
-            services.AddSingleton<IRoomManager, RoomManager>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
