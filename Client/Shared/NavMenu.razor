@@ -4,6 +4,7 @@
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 @inject IRoomManager RoomManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">Realtime Chat</a>
@@ -48,12 +49,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        RoomManager.RoomChanged += (s, e) =>
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        if (authState.User.Identity.IsAuthenticated)
         {
-            rooms = e;
-            StateHasChanged();
-        };
-        await UpdateRooms();
+            RoomManager.RoomChanged += (s, e) =>
+                {
+                rooms = e;
+                StateHasChanged();
+            };
+            await UpdateRooms();
+        }
     }
 
     public async Task OnRoomsChanged() => await UpdateRooms();
