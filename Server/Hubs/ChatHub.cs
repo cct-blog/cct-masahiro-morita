@@ -3,6 +3,7 @@ using blazorTest.Server.Models;
 using blazorTest.Shared;
 using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,6 +23,7 @@ namespace blazorTest.Server.Hubs
 
             var post = new Post()
             {
+                Id = Guid.NewGuid(),
                 ApplicationUserId = user.Id,
                 Text = message.MessageContext,
                 RoomId = message.RoomId
@@ -29,7 +31,15 @@ namespace blazorTest.Server.Hubs
             _context.Posts.Add(post);
             _context.SaveChanges();
 
-            await Clients.All.SendAsync(SignalRMehod.ReceiveMessage, message);
+            await Clients.All.SendAsync(SignalRMehod.ReceiveMessage,
+                new Message
+                {
+                    Id = post.Id,
+                    HandleName = message.HandleName,
+                    MessageContext = message.MessageContext,
+                    RoomId = message.RoomId,
+                    UserEmail = message.UserEmail
+                });
         }
     }
 }

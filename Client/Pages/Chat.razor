@@ -4,6 +4,7 @@
 @using System.Text.Json
 @using blazorTest.Shared;
 @using blazorTest.Shared.Models;
+@inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -34,29 +35,42 @@
     <AuthorizeView>
         <Authorized>
             <div class="content">
-                @foreach (var message in messages)
+                @foreach (var message in Messages)
                 {
-                    <PostItem Name="@message.HandleName" Message="@message.MessageContext" />
+                    <div id="@message.Id">
+                        <PostItem Name="@message.HandleName" Message="@message.MessageContext" />
+                    </div>
                 }
-                <hr id="end" />
-           </div>
+            </div>
             <div class="form-group" input>
                 <label>
-                    <input value="@_messageInput" @oninput="OnInput" size="100" @onkeydown="OnKeyDown" />
+                    <input value="@_messageInput" @oninput="OnInput" size="100" @onkeydown="OnKeyDown" id="messageInput" />
                     <button id="sender" @onclick="Send">Send(Alt+Enter)</button>
                 </label>
             </div>
-
+            <AnchorNavigation />
         </Authorized>
     </AuthorizeView>
 </div>
 
 @code {
-    private HubConnection hubConnection;
-
-    private List<Message> messages = new List<Message>();
+    private HubConnection _hubConnection;
 
     private string _messageInput;
+
+    List<Message> _messages = new List<Message>();
+
+    private List<Message> Messages
+    {
+        get => _messages;
+        set
+        {
+            _messages = value;
+            StateHasChanged();
+        }
+    }
+
+    private string _fragment;
 
     private Guid _roomId;
 
@@ -66,8 +80,102 @@
         get => _roomId;
         set
         {
+            if (_roomId == value)
+                return;
+
             _roomId = value;
+            _fragment = null;
+            Messages = new List<Message>();
+        }
+    }
+
+    public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"))
+            .Build();
+
+        _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, (message) =>
+        {
+            if (message.RoomId != _roomId)
+                return;
+
+            Messages.Add(message);
             StateHasChanged();
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (string.IsNullOrEmpty(_fragment))
+            await RefreshAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        base.OnAfterRenderAsync(firstRender);
+
+        NavigateToLast();
+        await Focus("messageInput");
+    }
+
+    private async Task Send()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var message = new Message()
+        {
+            Id = Guid.Empty,
+            UserEmail = authState.User.Identity.Name,
+            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
+            MessageContext = _messageInput,
+            RoomId = RoomId
+        };
+
+        _fragment = null;
+        _messageInput = string.Empty;
+
+        await _hubConnection.SendAsync(SignalRMehod.SendMessage, message);
+    }
+
+    /// <summary>
+    /// メッセージを更新します。
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        var nowDate = DateTime.Now;
+        var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
+
+
+        var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
+
+        Messages = await response.Content.ReadFromJsonAsync<List<Message>>();
+    }
+
+    /// <summary>
+    /// 最後のアンカーにスクロールするためにナビゲーションします。ただし、全ての描画が終わっている必要があります。
+    /// </summary>
+    private void NavigateToLast()
+    {
+        var count = Messages.Count;
+        if (count == 0)
+            return;
+
+        var message = Messages[count - 1];
+
+        var url = NavigationManager.Uri.Split("#");
+        if (url.Length == 1 || url.Length >= 2 && Guid.TryParse(url[1], out var lastMessageId) && lastMessageId != message.Id)
+        {
+            if (url.Length >= 2)
+                _fragment = url[1];
+
+            NavigationManager.NavigateTo($"{url[0]}#{message.Id}", true);
         }
     }
 
@@ -87,63 +195,13 @@
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    public async Task Focus(string elementId)
     {
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"))
-            .Build();
-
-        hubConnection.On<Message>(
-            SignalRMehod.ReceiveMessage, (message) =>
-            {
-                messages.Add(message);
-                StateHasChanged();
-            });
-
-        await hubConnection.StartAsync();
-
-        await RefreshAsync();
+        await JSRuntime.InvokeVoidAsync("focusElement", elementId);
     }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        await RefreshAsync();
-    }
-
-    async Task Send()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-
-        var message = new Message()
-        {
-            UserEmail = authState.User.Identity.Name,
-            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
-            MessageContext = _messageInput,
-            RoomId = RoomId
-        };
-
-        await hubConnection.SendAsync(SignalRMehod.SendMessage, message);
-
-        _messageInput = string.Empty;
-
-        NavigationManager.NavigateTo($"{NavigationManager.Uri}#end");
-    }
-
-    private async Task RefreshAsync()
-    {
-        var nowDate = DateTime.Now;
-        var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
-
-
-        var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
-
-        messages = await response.Content.ReadFromJsonAsync<List<Message>>();
-    }
-
-    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
 
     public void Dispose()
     {
-        _ = hubConnection.DisposeAsync();
+        _ = _hubConnection.DisposeAsync();
     }
 }
