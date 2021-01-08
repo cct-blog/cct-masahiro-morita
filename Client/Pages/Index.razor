@@ -11,12 +11,16 @@
     .margin {
         margin: 2px;
     }
+
+    .margin8 {
+        margin: 8px;
+    }
 </style>
 
 <div>
     <AuthorizeView>
         <Authorized>
-            <div class="margin">
+            <div class="margin8">
                 @{ userEmail = context.User.Identity.Name;}
                 @if (rooms is null)
                 {
@@ -27,11 +31,13 @@
                 }
                 else
                 {
-                    <h4>チャットルームを選択してください</h4>
+                    <nav class="navbar navbar-dark bg-dark">
+                        <span class="navbar-brand mb-0 h1 text-white-50">チャットルームを選択してください</span>
+                    </nav>
                     <div class="d-flex flex-wrap">
                         @foreach (var room in rooms)
                         {
-                            <NavLink class="btn btn-secondary margin" href=@("chat/" + room.Id)>
+                            <NavLink class="btn btn-secondary margin8" href=@("chat/" + room.Id)>
                                 <span class="oi oi-document" aria-hidden="true"></span>@room.Name
                             </NavLink>
                         }
@@ -40,7 +46,7 @@
                 <hr />
 
                 <div class="d-flex flex-wrap">
-                    <input class="margin" type="text" @bind="newRoomName" />
+                    <input class="margin8" type="text" @bind="newRoomName" />
                     <button class="btn btn-primary" @onclick="CreateRoom">新規ルーム作成</button>
                 </div>
             </div>
