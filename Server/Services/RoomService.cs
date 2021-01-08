@@ -41,6 +41,12 @@ namespace blazorTest.Server.Services
                 .AsEnumerable()
                 .First();
 
+        internal void DeleteRoom(Guid roomId)
+        {
+            _context.Remove(new Room() { Id = roomId });
+            _context.SaveChanges();
+        }
+
         internal RoomDetail ReadRoomDetailFromId(Guid id)
         {
             var roomQuery = _context.Rooms.Where(_room => _room.Id == id);

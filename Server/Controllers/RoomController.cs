@@ -35,5 +35,12 @@ namespace blazorTest.Server.Controllers
 
         [HttpPost]
         public RoomDetail CreateRoom(CreateRoom createRoom) => _roomService.CreateRoom(createRoom);
+
+        [HttpDelete("{roomId:guid}")]
+        public IActionResult DeleteRoom(Guid roomId)
+        {
+            _roomService.DeleteRoom(roomId);
+            return NoContent();
+        }
     }
 }
