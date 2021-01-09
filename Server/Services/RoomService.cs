@@ -43,8 +43,15 @@ namespace blazorTest.Server.Services
 
         internal void DeleteRoom(Guid roomId)
         {
-            _context.Remove(new Room() { Id = roomId });
-            _context.SaveChanges();
+            var room = _context.Rooms
+                .Where(_room => _room.Id == roomId)
+                .FirstOrDefault();
+
+            if (room is not null)
+            {
+                _context.Remove(room);
+                _context.SaveChanges();
+            }
         }
 
         internal RoomDetail ReadRoomDetailFromId(Guid id)
