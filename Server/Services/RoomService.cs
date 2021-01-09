@@ -17,11 +17,17 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public IEnumerable<UserRoom> ReadRoomListOfUser(string userId)
+        public IEnumerable<UserRoom> ReadRoomListOfUser(string userEmail)
         {
+            var user = _context.Users
+                .Where(_user => _user.Email == userEmail)
+                .FirstOrDefault();
+
             return _context.Rooms
-                .Include(room => room.UserInfoInRooms
-                    .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId))
+                .Include(room => room.UserInfoInRooms)
+                .Where(_room => _room.UserInfoInRooms
+                    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
+                    .Count() >= 1)
                 .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
                 .AsEnumerable();
         }
