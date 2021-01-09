@@ -59,7 +59,7 @@ namespace blazorTest.Server.Services
             return ReadRoomDetail(roomQuery);
         }
 
-        internal void AddUserToRoom(List<string> userEmails, Guid roomId)
+        internal RoomDetail AddUserToRoom(List<string> userEmails, Guid roomId)
         {
             var users = _context.Users
                 .Where(_user => userEmails.Contains(_user.Email))
@@ -72,6 +72,8 @@ namespace blazorTest.Server.Services
             });
 
             _context.SaveChanges();
+
+            return ReadRoomDetailFromId(roomId);
         }
 
         internal RoomDetail CreateRoom(CreateRoom createRoom)
