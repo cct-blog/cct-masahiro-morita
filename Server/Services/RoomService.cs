@@ -47,19 +47,6 @@ namespace blazorTest.Server.Services
                 .AsEnumerable()
                 .First();
 
-        internal void DeleteRoom(Guid roomId)
-        {
-            var room = _context.Rooms
-                .Where(_room => _room.Id == roomId)
-                .FirstOrDefault();
-
-            if (room is not null)
-            {
-                _context.Remove(room);
-                _context.SaveChanges();
-            }
-        }
-
         internal RoomDetail ReadRoomDetailFromId(Guid id)
         {
             var roomQuery = _context.Rooms.Where(_room => _room.Id == id);
@@ -70,6 +57,21 @@ namespace blazorTest.Server.Services
         {
             var roomQuery = _context.Rooms.Where(_room => _room.Name == name);
             return ReadRoomDetail(roomQuery);
+        }
+
+        internal void AddUserToRoom(List<string> userEmails, Guid roomId)
+        {
+            var users = _context.Users
+                .Where(_user => userEmails.Contains(_user.Email))
+                .ToList();
+
+            users.ForEach(_user =>
+            {
+                var userInfoInRoom = new UserInfoInRoom() { ApplicationUserId = _user.Id, RoomId = roomId };
+                _context.Add(userInfoInRoom);
+            });
+
+            _context.SaveChanges();
         }
 
         internal RoomDetail CreateRoom(CreateRoom createRoom)
@@ -98,6 +100,19 @@ namespace blazorTest.Server.Services
             _context.SaveChanges();
 
             return ReadRoomDetailFromName(createRoom.RoomName);
+        }
+
+        internal void DeleteRoom(Guid roomId)
+        {
+            var room = _context.Rooms
+                .Where(_room => _room.Id == roomId)
+                .FirstOrDefault();
+
+            if (room is not null)
+            {
+                _context.Remove(room);
+                _context.SaveChanges();
+            }
         }
     }
 }
