@@ -7,15 +7,15 @@
 <AuthorizeView>
     <Authorized>
         <div class="container">
-            <div class="row justify-content-end">
-                <a class="col-2 nav-link btn btn-link" href="authentication/profile">@(context.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value)</a>
+            <div class="row justify-content-end top-row">
+                <a class="col-2 nav-link btn btn-link" href="authentication/profile">@(context.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value) さん</a>
                 <button class="col-2 nav-link btn btn-link" @onclick="BeginSignOut">Log out</button>
             </div>
         </div>
     </Authorized>
     <NotAuthorized>
         <div class="container">
-            <div class="row justify-content-end">
+            <div class="row justify-content-end top-row">
                 <a class="col-2 nav-link btn btn-link" href="authentication/register">Register</a>
                 <a class="col-2 nav-link btn btn-link" href="authentication/login">Log in</a>
             </div>
