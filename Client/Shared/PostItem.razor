@@ -8,8 +8,13 @@
 
 <div>
     <small class="text-white-50">@Name</small>
-    <div class="rounded border border-dark bg-dark message text-white">
-        <span>@Message</span>
+    <div class="rounded border border-dark bg-dark text-white">
+        @foreach (var line in Message?.Split("\n") ?? Enumerable.Empty<string>())
+        {
+            <div class="message text-white">
+                <span>@line</span>
+            </div>
+        }
     </div>
 </div>
 
