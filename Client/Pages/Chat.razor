@@ -56,7 +56,7 @@
             </div>
             <div class="form-group margin-left input">
                 <div class="row margin">
-                    <input class="col margin inputbox" value="@_messageInput" @oninput="OnInput" @onkeydown="OnKeyDown" id="messageInput" />
+                    <textarea class="col margin inputbox" value="@_messageInput" @oninput="OnInput" @onkeydown="OnKeyDown" id="messageInput" />
                     <button class="col-md-auto margin btn btn-primary" id="sender" @onclick="Send">送信(Alt+Enter)</button>
                 </div>
             </div>
