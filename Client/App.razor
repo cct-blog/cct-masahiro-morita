@@ -1,9 +1,6 @@
-@using Microsoft.AspNetCore.Components.Web.Extensions.Head
-
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly">
         <Found Context="routeData">
-            <Title Value="RealTimeChat"></Title>
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <NotAuthorized>
                     @if (!context.User.Identity.IsAuthenticated)
@@ -18,7 +15,6 @@
             </AuthorizeRouteView>
         </Found>
         <NotFound>
-            <Title Value="RealTimeChat"></Title>
             <LayoutView Layout="@typeof(MainLayout)">
                 <p>Sorry, there's nothing at this address.</p>
             </LayoutView>
