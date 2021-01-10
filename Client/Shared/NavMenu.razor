@@ -5,6 +5,12 @@
 @inject HttpClient HttpClient
 @inject IRoomManager RoomManager
 
+<style>
+    .scroll-y {
+        overflow-y: auto;
+    }
+</style>
+
 <div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">Realtime Chat</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -12,7 +18,7 @@
     </button>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+<div class="@NavMenuCssClass scroll-y" @onclick="ToggleNavMenu">
     <ul class="nav flex-column">
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
