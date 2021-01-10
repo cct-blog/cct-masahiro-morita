@@ -17,11 +17,17 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public IEnumerable<UserRoom> ReadRoomListOfUser(string userId)
+        public IEnumerable<UserRoom> ReadRoomListOfUser(string userEmail)
         {
+            var user = _context.Users
+                .Where(_user => _user.Email == userEmail)
+                .FirstOrDefault();
+
             return _context.Rooms
-                .Include(room => room.UserInfoInRooms
-                    .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId))
+                .Include(room => room.UserInfoInRooms)
+                .Where(_room => _room.UserInfoInRooms
+                    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
+                    .Count() >= 1)
                 .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
                 .AsEnumerable();
         }
@@ -53,6 +59,23 @@ namespace blazorTest.Server.Services
             return ReadRoomDetail(roomQuery);
         }
 
+        internal RoomDetail AddUserToRoom(List<string> userEmails, Guid roomId)
+        {
+            var users = _context.Users
+                .Where(_user => userEmails.Contains(_user.Email))
+                .ToList();
+
+            users.ForEach(_user =>
+            {
+                var userInfoInRoom = new UserInfoInRoom() { ApplicationUserId = _user.Id, RoomId = roomId };
+                _context.Add(userInfoInRoom);
+            });
+
+            _context.SaveChanges();
+
+            return ReadRoomDetailFromId(roomId);
+        }
+
         internal RoomDetail CreateRoom(CreateRoom createRoom)
         {
             var userData = createRoom.UserIds
@@ -79,6 +102,19 @@ namespace blazorTest.Server.Services
             _context.SaveChanges();
 
             return ReadRoomDetailFromName(createRoom.RoomName);
+        }
+
+        internal void DeleteRoom(Guid roomId)
+        {
+            var room = _context.Rooms
+                .Where(_room => _room.Id == roomId)
+                .FirstOrDefault();
+
+            if (room is not null)
+            {
+                _context.Remove(room);
+                _context.SaveChanges();
+            }
         }
     }
 }
