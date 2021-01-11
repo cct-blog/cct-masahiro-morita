@@ -8,12 +8,16 @@
 <style>
     .scroll-y {
         overflow-y: auto;
+        height: 90vh;
     }
 </style>
 
 <div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">Realtime Chat</a>
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+    <a class="navbar-brand mr-1" href="">
+        <img src="SignalRLogo.ico" width="30px" height="30px" class="mr-2" />
+        Realtime Chat
+    </a>
+    <button class="navbar-toggler px-1" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>
 </div>
