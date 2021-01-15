@@ -25,9 +25,9 @@ namespace blazorTest.Server.Services
 
             return _context.Rooms
                 .Include(room => room.UserInfoInRooms)
-                .Where(_room => _room.UserInfoInRooms
-                    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
-                    .Count() >= 1)
+                //.Where(_room => _room.UserInfoInRooms
+                //    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
+                //    .Count() >= 1)
                 .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
                 .AsEnumerable();
         }
