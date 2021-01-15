@@ -50,7 +50,7 @@
                 @foreach (var message in Messages)
                 {
                     <div id="@message.Id" class="margin">
-                        <PostItem Name="@message.HandleName" Message="@message.MessageContext" />
+                        <PostItem Name="@message.HandleName" Message="@message.MessageContext" CreateDate="@message.CreateDate" />
                     </div>
                 }
             </div>
@@ -163,7 +163,6 @@
     {
         var nowDate = DateTime.Now;
         var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
-
 
         var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
 
