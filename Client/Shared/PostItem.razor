@@ -4,10 +4,9 @@
     }
 </style>
 
-
-
 <div>
     <small class="text-white-50">@Name</small>
+    <small class="text-white-50"> (@CreateDate.)</small>
     <div class="rounded border border-dark bg-dark text-white">
         @foreach (var line in Message?.Split("\n") ?? Enumerable.Empty<string>())
         {
@@ -24,5 +23,8 @@
 
     [Parameter]
     public string Message { get; set; }
+
+    [Parameter]
+    public DateTime CreateDate { get; set; }
 
 }

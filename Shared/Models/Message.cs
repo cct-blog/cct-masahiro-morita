@@ -15,6 +15,8 @@ namespace blazorTest.Shared.Models
 
         public string MessageContext { get; init; }
 
+        public DateTime CreateDate { get; init; }
+
         public Guid RoomId { get; init; }
     }
 }
