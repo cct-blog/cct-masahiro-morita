@@ -33,5 +33,22 @@ namespace blazorTest.Server.Services
                     HandleName = _post.ApplicationUser.HandleName,
                     CreateDate = _post.CreateDate
                 });
+
+        public void UpdateLastAccessDate(string userEmail, Guid roomId)
+        {
+            var userId = _context.Users
+                .Where(_user => _user.Email == userEmail)
+                .FirstOrDefault()
+                .Id;
+
+            var userInfoInRoom = _context.UserInfoInRooms
+                .Where(_userInfo => _userInfo.ApplicationUserId == userId && _userInfo.RoomId == roomId)
+                .FirstOrDefault();
+
+            userInfoInRoom.LatestAccessDate = DateTime.Now;
+
+            _context.Update(userInfoInRoom);
+            _context.SaveChanges();
+        }
     }
 }

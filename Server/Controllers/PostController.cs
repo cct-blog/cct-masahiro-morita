@@ -13,7 +13,7 @@ namespace blazorTest.Server.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class PostController
+    public class PostController : ControllerBase
     {
         private readonly ILogger<PostController> _logger;
 
@@ -25,12 +25,23 @@ namespace blazorTest.Server.Controllers
             _postService = postService;
         }
 
-        [HttpPost]
-        public IEnumerable<Message> Post(
-            [FromBody] ChatPostPostRequest requestBody)
+        [HttpGet]
+        public IEnumerable<Message> Get(ChatPostPostRequest requestBody)
         {
             var messages = _postService.ReadPostWhenWindowOpened(
                 requestBody.RoomId, requestBody.NeedMessageTailDate);
+
+            return messages;
+        }
+
+        // Get Post and Update last access date of room, so only use in initial gettting
+        [HttpPost]
+        public IEnumerable<Message> Post(ChatPostPostRequest requestBody)
+        {
+            var messages = _postService.ReadPostWhenWindowOpened(
+                requestBody.RoomId, requestBody.NeedMessageTailDate);
+
+            _postService.UpdateLastAccessDate(User.Identity.Name, requestBody.RoomId);
             return messages;
         }
     }
