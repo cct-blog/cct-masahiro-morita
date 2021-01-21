@@ -34,7 +34,7 @@ namespace blazorTest.Server.Services.Tests
 
             var service = new PostService(context);
 
-            var result = service.ReadPostWhenWindowOpened(roomId, DateTime.Now, 50);
+            var result = service.ReadRoomPost(roomId, DateTime.Now, 50);
 
             Assert.AreEqual(50, result.Count());
         }

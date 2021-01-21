@@ -28,7 +28,7 @@ namespace blazorTest.Server.Controllers
         [HttpGet]
         public IEnumerable<Message> Get(ChatPostPostRequest requestBody)
         {
-            var messages = _postService.ReadPostWhenWindowOpened(
+            var messages = _postService.ReadRoomPost(
                 requestBody.RoomId, requestBody.NeedMessageTailDate);
 
             return messages;
@@ -38,7 +38,7 @@ namespace blazorTest.Server.Controllers
         [HttpPost]
         public IEnumerable<Message> Post(ChatPostPostRequest requestBody)
         {
-            var messages = _postService.ReadPostWhenWindowOpened(
+            var messages = _postService.ReadRoomPost(
                 requestBody.RoomId, requestBody.NeedMessageTailDate);
 
             _postService.UpdateLastAccessDate(User.Identity.Name, requestBody.RoomId);
