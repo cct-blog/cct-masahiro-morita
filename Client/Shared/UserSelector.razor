@@ -1,0 +1,38 @@
+﻿@using blazorTest.Shared.Models;
+
+<h3>UserSelector</h3>
+@foreach (var user in Users)
+{
+    <UserRow User=@user
+             Selectable=@true
+             IsSelected=@SelectedUsers.Contains(user.Id)
+             IsSelectedChanged="@(arg => OnSelectionChanged(user.Id, arg))" />
+}
+
+
+@code {
+    /// <summary>
+    /// 一覧するユーザー
+    /// </summary>
+    [Parameter]
+    public IEnumerable<User> Users { get; set; } = Enumerable.Empty<User>();
+
+    /// <summary>
+    /// 選択中のユーザー
+    /// </summary>
+    [Parameter]
+    public HashSet<string> SelectedUsers { get; set; } = new HashSet<string>();
+
+    private void OnSelectionChanged(string userId, bool value)
+    {
+        if (value)
+        {
+            SelectedUsers.Add(userId);
+        }
+        else
+        {
+            SelectedUsers.Remove(userId);
+        }
+    }
+}
+

@@ -46,6 +46,9 @@
 <div class="layout">
     <AuthorizeView>
         <Authorized>
+            <div>
+                <UserSelector Users="@Users" />
+            </div>
             <div class="content margin-left">
                 @foreach (var message in Messages)
                 {
@@ -86,6 +89,8 @@
 
     private Guid _roomId;
 
+    private List<User> Users { get; set; } = new List<User>();
+
     [Parameter]
     public Guid RoomId
     {
@@ -118,7 +123,12 @@
             StateHasChanged();
         });
 
-        await _hubConnection.StartAsync();
+        var roomDetail = await HttpClient.GetFromJsonAsync<RoomDetail>($"room/{_roomId}");
+
+        Users = roomDetail.Users;
+
+
+    await _hubConnection.StartAsync();
     }
 
     protected override async Task OnParametersSetAsync()

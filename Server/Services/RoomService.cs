@@ -42,7 +42,7 @@ namespace blazorTest.Server.Services
                     RoomName = _room.Name,
                     CreateDate = _room.CreateDate,
                     UpdateDate = _room.UpdateDate,
-                    UserName = _room.UserInfoInRooms.Select(_m => _m.ApplicationUser.HandleName).ToList()
+                    Users = _room.UserInfoInRooms.Select(_m => new User { Id = _m.ApplicationUser.Id, HandleName = _m.ApplicationUser.HandleName, LastAccess = _m.LatestAccessDate }).ToList()
                 })
                 .AsEnumerable()
                 .First();
