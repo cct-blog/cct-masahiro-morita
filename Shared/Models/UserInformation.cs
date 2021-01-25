@@ -11,5 +11,7 @@ namespace blazorTest.Shared.Models
         public string HandleName { get; init; }
 
         public string Email { get; init; }
+
+        public DateTime LastAccessDate { get; init; }
     }
 }
