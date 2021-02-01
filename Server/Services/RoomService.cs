@@ -27,12 +27,12 @@ namespace blazorTest.Server.Services
                 .Include(room => room.UserInfoInRooms)
                 .Where(_room => _room.UserInfoInRooms
                     .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
-                    .Count() >= 1)
+                    .Any())
                 .Select(_room => new UserRoom()
                 {
                     Id = _room.Id,
                     Name = _room.Name,
-                    LastAccessDate = _room.UserInfoInRooms.First().LatestAccessDate
+                    LastAccessDate = _room.UserInfoInRooms.FirstOrDefault().LatestAccessDate
                 })
                 .AsEnumerable();
         }
@@ -57,7 +57,7 @@ namespace blazorTest.Server.Services
                     .ToList()
                 })
                 .AsEnumerable()
-                .First();
+                .FirstOrDefault();
 
         internal RoomDetail ReadRoomDetailFromId(Guid id)
         {
@@ -94,7 +94,7 @@ namespace blazorTest.Server.Services
                 .Select(_userEmail => _context.Users
                     .Where(_user => _user.Email == _userEmail)
                     .AsEnumerable()
-                    .First())
+                    .FirstOrDefault())
                 .ToList();
 
             var userInfoInRooms = userData
