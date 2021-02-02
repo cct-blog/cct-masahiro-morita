@@ -26,6 +26,6 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<UserInformation> Get() => _userService.ReadUsersInfomation();
+        public async Task<IEnumerable<UserInformation>> Get() => await _userService.ReadUsersInfomation();
     }
 }

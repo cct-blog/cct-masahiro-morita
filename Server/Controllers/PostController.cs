@@ -26,9 +26,9 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Message> Get(ChatPostPostRequest requestBody)
+        public async Task<IEnumerable<Message>> Get(ChatPostPostRequest requestBody)
         {
-            var messages = _postService.ReadRoomPost(
+            var messages = await _postService.ReadRoomPost(
                 requestBody.RoomId, requestBody.NeedMessageTailDate);
 
             return messages;
@@ -36,12 +36,12 @@ namespace blazorTest.Server.Controllers
 
         // Get Post and Update last access date of room, so only use in initial gettting
         [HttpPost]
-        public IEnumerable<Message> Post(ChatPostPostRequest requestBody)
+        public async Task<IEnumerable<Message>> Post(ChatPostPostRequest requestBody)
         {
-            var messages = _postService.ReadRoomPost(
+            var messages = await _postService.ReadRoomPost(
                 requestBody.RoomId, requestBody.NeedMessageTailDate);
 
-            _postService.UpdateLastAccessDate(User.Identity.Name, requestBody.RoomId);
+            await _postService.UpdateLastAccessDate(User.Identity.Name, requestBody.RoomId);
             return messages;
         }
     }

@@ -8,6 +8,7 @@ using NUnit.Framework;
 using blazorTest.ServerTests.ContextBase;
 using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace blazorTest.Server.Services.Tests
 {
@@ -22,7 +23,7 @@ namespace blazorTest.Server.Services.Tests
         }
 
         [TestMethod()]
-        public void ReadPostWhenWindowOpenedTest()
+        public async Task ReadPostWhenWindowOpenedTest()
         {
             using var transaction = Fixture.Connection.BeginTransaction();
             using var context = Fixture.CreateContext(transaction);
@@ -34,7 +35,7 @@ namespace blazorTest.Server.Services.Tests
 
             var service = new PostService(context);
 
-            var result = service.ReadRoomPost(roomId, DateTime.Now, 50);
+            var result = await service.ReadRoomPost(roomId, DateTime.Now, 50);
 
             Assert.AreEqual(50, result.Count());
         }
