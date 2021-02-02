@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace blazorTest.Server.Controllers
 {
@@ -24,26 +25,28 @@ namespace blazorTest.Server.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<UserRoom> Get()
+        public async Task<IEnumerable<UserRoom>> Get()
         {
             var userEmail = User.Identity.Name;
-            return _roomService.ReadRoomListOfUser(userEmail);
+            return await _roomService.ReadRoomListOfUser(userEmail);
         }
 
         [HttpGet("{roomId:guid}")]
-        public RoomDetail GetRoomDetail(Guid roomId) => _roomService.ReadRoomDetailFromId(roomId);
+        public async Task<RoomDetail> GetRoomDetail(Guid roomId)
+            => await _roomService.ReadRoomDetailFromId(roomId);
 
         [HttpPost]
-        public RoomDetail CreateRoom(CreateRoom createRoom) => _roomService.CreateRoom(createRoom);
+        public async Task<RoomDetail> CreateRoom(CreateRoom createRoom)
+            => await _roomService.CreateRoom(createRoom);
 
         [HttpPost("{roomId:guid}/User")]
-        public RoomDetail AddUserToRoom(Guid roomId, List<string> userEmail)
-            => _roomService.AddUserToRoom(userEmail, roomId);
+        public async Task<RoomDetail> AddUserToRoom(Guid roomId, List<string> userEmail)
+            => await _roomService.AddUserToRoom(userEmail, roomId);
 
         [HttpDelete("{roomId:guid}")]
-        public IActionResult DeleteRoom(Guid roomId)
+        public async Task<IActionResult> DeleteRoom(Guid roomId)
         {
-            _roomService.DeleteRoom(roomId);
+            await _roomService.DeleteRoom(roomId);
             return NoContent();
         }
     }
