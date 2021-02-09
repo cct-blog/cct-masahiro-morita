@@ -25,6 +25,10 @@ namespace blazorTest.Server.Controllers
             _userService = userService;
         }
 
+        /// <summary>
+        /// Get all users
+        /// </summary>
+        /// <returns>All user list</returns>
         [HttpGet]
         public async Task<IEnumerable<UserInformation>> Get() => await _userService.ReadUsersInfomation();
     }

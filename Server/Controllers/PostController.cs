@@ -25,6 +25,14 @@ namespace blazorTest.Server.Controllers
             _postService = postService;
         }
 
+        /// <summary>
+        /// Get the post message in user specified room.
+        /// Under 50 post posting after specified datetime will be returned
+        /// </summary>
+        /// <param name="requestBody">
+        /// The room id wanted to get, and can specify data count and tail date
+        /// </param>
+        /// <returns>The message with user specified condition</returns>
         [HttpGet]
         public async Task<IEnumerable<Message>> Get(ChatPostPostRequest requestBody)
         {
@@ -34,7 +42,14 @@ namespace blazorTest.Server.Controllers
             return messages;
         }
 
-        // Get Post and Update last access date of room, so only use in initial gettting
+        /// <summary>
+        /// The message user specified will be returned
+        /// This method update Room access date, therefore only call in initializing room
+        /// </summary>
+        /// <param name="requestBody">
+        /// The room id wanted to get, and can specify data count and tail date
+        /// </param>
+        /// <returns>The message with user specified condition</returns>
         [HttpPost]
         public async Task<IEnumerable<Message>> Post(ChatPostPostRequest requestBody)
         {
