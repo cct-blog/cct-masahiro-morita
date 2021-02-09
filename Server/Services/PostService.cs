@@ -21,40 +21,40 @@ namespace blazorTest.Server.Services
             Guid roomId, DateTime tailDate, int MessageCount = 50)
         {
             var roomPost = await _context.Posts
-                .Where(_post => _post.RoomId.Equals(roomId)
-                    && _post.CreateDate < tailDate)
-                .Include(_post => _post.ApplicationUser)
+                .Where(post => post.RoomId.Equals(roomId)
+                    && post.CreateDate < tailDate)
+                .Include(post => post.ApplicationUser)
                 .ToArrayAsync();
 
             return roomPost
                 .OrderBy(post => post.CreateDate)
                 .TakeLast(MessageCount)
-                .Select(_post => new Message()
+                .Select(post => new Message()
                 {
-                    Id = _post.Id,
+                    Id = post.Id,
                     RoomId = roomId,
-                    MessageContext = _post.Text,
-                    HandleName = _post.ApplicationUser.HandleName,
-                    CreateDate = _post.CreateDate
+                    MessageContext = post.Text,
+                    HandleName = post.ApplicationUser.HandleName,
+                    CreateDate = post.CreateDate
                 });
         }
 
         public async Task<IEnumerable<UserBelongedRoomPost>> ReadUserBelongedRoomPost(string userEmail, DateTime tailDate)
         {
             var user = await _context.Users
-                .Where(_user => _user.Email == userEmail)
+                .Where(user => user.Email == userEmail)
                 .FirstOrDefaultAsync();
             var userId = user.Id;
 
             return await _context.UserInfoInRooms
-                .Where(_userRoom => _userRoom.ApplicationUserId == userId)
-                .Include(_userRoom => _userRoom.Room)
-                .ThenInclude(_room => _room.Posts
-                    .Where(_post => _post.CreateDate > tailDate))
-                .Select(_userRoom => new UserBelongedRoomPost()
+                .Where(userRoom => userRoom.ApplicationUserId == userId)
+                .Include(userRoom => userRoom.Room)
+                .ThenInclude(room => room.Posts
+                    .Where(post => post.CreateDate > tailDate))
+                .Select(userRoom => new UserBelongedRoomPost()
                 {
-                    RoomId = _userRoom.RoomId,
-                    Texts = _userRoom.Room.Posts.Select(_post => _post.Text).AsEnumerable()
+                    RoomId = userRoom.RoomId,
+                    Texts = userRoom.Room.Posts.Select(post => post.Text).AsEnumerable()
                 })
                 .ToArrayAsync();
         }
@@ -62,14 +62,14 @@ namespace blazorTest.Server.Services
         public async Task UpdateLastAccessDate(string userEmail, Guid roomId)
         {
             var user = await _context.Users
-                .Where(_user => _user.Email == userEmail)
+                .Where(user => user.Email == userEmail)
                 .FirstOrDefaultAsync();
             var userId = user.Id;
 
             await ReadUserBelongedRoomPost(userEmail, DateTime.Now);
 
             var userInfoInRoom = await _context.UserInfoInRooms
-                .Where(_userInfo => _userInfo.ApplicationUserId == userId && _userInfo.RoomId == roomId)
+                .Where(userInfo => userInfo.ApplicationUserId == userId && userInfo.RoomId == roomId)
                 .FirstOrDefaultAsync();
 
             userInfoInRoom.LatestAccessDate = DateTime.Now;
