@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace blazorTest.Shared.Models
 {
@@ -15,6 +18,6 @@ namespace blazorTest.Shared.Models
 
         public DateTime LastAccessedDate { get; init; }
 
-        public List<User> Users { get; init; }
+        public List<UserInformation> Users { get; init; }
     }
 }

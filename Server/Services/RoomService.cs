@@ -25,9 +25,9 @@ namespace blazorTest.Server.Services
 
             return _context.Rooms
                 .Include(room => room.UserInfoInRooms)
-                //.Where(_room => _room.UserInfoInRooms
-                //    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
-                //    .Count() >= 1)
+                .Where(_room => _room.UserInfoInRooms
+                    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
+                    .Count() >= 1)
                 .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
                 .AsEnumerable();
         }
@@ -42,7 +42,14 @@ namespace blazorTest.Server.Services
                     RoomName = _room.Name,
                     CreateDate = _room.CreateDate,
                     UpdateDate = _room.UpdateDate,
-                    Users = _room.UserInfoInRooms.Select(_m => new User { Id = _m.ApplicationUser.Id, HandleName = _m.ApplicationUser.HandleName, LastAccess = _m.LatestAccessDate }).ToList()
+                    Users = _room.UserInfoInRooms
+                        .Select(_m => new UserInformation()
+                        {
+                            HandleName = _m.ApplicationUser.HandleName,
+                            Email = _m.ApplicationUser.Email,
+                            LastAccessDate = _m.LatestAccessDate
+                        })
+                    .ToList()
                 })
                 .AsEnumerable()
                 .First();
