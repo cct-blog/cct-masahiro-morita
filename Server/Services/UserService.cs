@@ -19,10 +19,10 @@ namespace blazorTest.Server.Services
 
         public async Task<IEnumerable<UserInformation>> ReadUsersInfomation()
             => await _context.Users
-            .Select(_user => new UserInformation()
+            .Select(user => new UserInformation()
             {
-                HandleName = _user.HandleName,
-                Email = _user.Email
+                HandleName = user.HandleName,
+                Email = user.Email
             })
             .ToArrayAsync();
     }
