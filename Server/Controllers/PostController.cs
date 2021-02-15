@@ -26,13 +26,13 @@ namespace blazorTest.Server.Controllers
         }
 
         /// <summary>
-        /// Get the post message in user specified room.
-        /// Under 50 post posting after specified datetime will be returned
+        /// 指定したルーム内の投稿を取得します。
+        /// 指定した日時から最大で50個の投稿を取得します。
         /// </summary>
         /// <param name="requestBody">
-        /// The room id wanted to get, and can specify data count and tail date
+        /// 取得する投稿の条件
         /// </param>
-        /// <returns>The message with user specified condition</returns>
+        /// <returns>指定した条件に合致する投稿一覧</returns>
         [HttpGet]
         public async Task<IEnumerable<Message>> Get(ChatPostPostRequest requestBody)
         {
@@ -43,13 +43,14 @@ namespace blazorTest.Server.Controllers
         }
 
         /// <summary>
-        /// The message user specified will be returned
-        /// This method update Room access date, therefore only call in initializing room
+        /// 指定したルーム内の投稿を取得します。
+        /// 指定した日時から最大で50個の投稿を取得します。
+        /// また、ルームにアクセスした最新の日時を更新します。
         /// </summary>
         /// <param name="requestBody">
-        /// The room id wanted to get, and can specify data count and tail date
+        /// 取得する投稿の条件
         /// </param>
-        /// <returns>The message with user specified condition</returns>
+        /// <returns>指定した条件に合致する投稿一覧</returns>
         [HttpPost]
         public async Task<IEnumerable<Message>> Post(ChatPostPostRequest requestBody)
         {

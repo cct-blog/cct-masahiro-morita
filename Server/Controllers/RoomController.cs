@@ -25,9 +25,9 @@ namespace blazorTest.Server.Controllers
         }
 
         /// <summary>
-        /// Get room list user can access
+        /// 認証したユーザーがアクセスできるルームの一覧を取得します。
         /// </summary>
-        /// <returns>Room list user can access</returns>
+        /// <returns>アクセス可能なルームの一覧</returns>
         [HttpGet]
         public async Task<IEnumerable<UserRoom>> Get()
         {
@@ -36,33 +36,38 @@ namespace blazorTest.Server.Controllers
         }
 
         /// <summary>
-        /// Get user specified room detail
+        /// 指定したルームの詳細な情報を取得します。
         /// </summary>
-        /// <param name="roomId">room id want to get room detail</param>
-        /// <returns>Room detail user specified</returns>
+        /// <param name="roomId">詳細情報を取得したいルームのID</param>
+        /// <returns>指定したルームの詳細情報</returns>
         [HttpGet("{roomId:guid}")]
         public async Task<RoomDetail> GetRoomDetail(Guid roomId)
             => await _roomService.ReadRoomDetailFromId(roomId);
 
         /// <summary>
-        /// Create room with room participant user specified
+        /// 指定した内容のルームを作成します。
         /// </summary>
-        /// <param name="createRoom">room name and particepant want to create</param>
-        /// <returns>Created room detail</returns>
+        /// <param name="createRoom">作成するルームの詳細</param>
+        /// <returns>作成されたルームの詳細情報</returns>
         [HttpPost]
         public async Task<RoomDetail> CreateRoom(CreateRoom createRoom)
             => await _roomService.CreateRoom(createRoom);
 
         /// <summary>
-        /// Add user to room member
+        /// ルームにユーザーを追加(参加)します。
         /// </summary>
-        /// <param name="roomId">room id want to be participated</param>
-        /// <param name="userEmail">user list participate to room</param>
-        /// <returns></returns>
+        /// <param name="roomId">ユーザーを追加するルームのID</param>
+        /// <param name="userEmail">追加したいユーザーのEmail一覧</param>
+        /// <returns>ユーザーを追加したルームの詳細情報</returns>
         [HttpPost("{roomId:guid}/User")]
         public async Task<RoomDetail> AddUserToRoom(Guid roomId, List<string> userEmail)
             => await _roomService.AddUserToRoom(userEmail, roomId);
 
+        /// <summary>
+        /// 指定したルームを削除します。
+        /// </summary>
+        /// <param name="roomId">削除したいルームのID</param>
+        /// <returns>No content</returns>
         [HttpDelete("{roomId:guid}")]
         public async Task<IActionResult> DeleteRoom(Guid roomId)
         {

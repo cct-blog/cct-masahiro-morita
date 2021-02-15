@@ -26,9 +26,9 @@ namespace blazorTest.Server.Controllers
         }
 
         /// <summary>
-        /// Get all users
+        /// すべてのユーザーを取得します。
         /// </summary>
-        /// <returns>All user list</returns>
+        /// <returns>全ユーザー一覧</returns>
         [HttpGet]
         public async Task<IEnumerable<UserInformation>> Get() => await _userService.ReadUsersInfomation();
     }
