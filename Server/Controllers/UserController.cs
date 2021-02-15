@@ -15,13 +15,13 @@ namespace blazorTest.Server.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly ILogger<UserController> logger;
+        private readonly ILogger<UserController> _logger;
 
         private readonly UserService _userService;
 
         public UserController(ILogger<UserController> logger, UserService userService)
         {
-            this.logger = logger;
+            _logger = logger;
             _userService = userService;
         }
 

@@ -14,13 +14,13 @@ namespace blazorTest.Server.Controllers
     [Route("[controller]")]
     public class RoomController : ControllerBase
     {
-        private readonly ILogger<RoomController> logger;
+        private readonly ILogger<RoomController> _logger;
 
         private readonly RoomService _roomService;
 
         public RoomController(ILogger<RoomController> logger, RoomService roomService)
         {
-            this.logger = logger;
+            _logger = logger;
             _roomService = roomService;
         }
 

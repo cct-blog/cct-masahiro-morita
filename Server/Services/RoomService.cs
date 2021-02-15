@@ -21,8 +21,7 @@ namespace blazorTest.Server.Services
         public async Task<IEnumerable<UserRoom>> ReadRoomListOfUser(string userEmail)
         {
             var user = await _context.Users
-                .Where(user => user.Email == userEmail)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(user => user.Email == userEmail);
 
             return await _context.UserInfoInRooms
                 .Include(userInfoInRooms => userInfoInRooms.Room)
@@ -92,18 +91,16 @@ namespace blazorTest.Server.Services
 
         internal async Task<RoomDetail> CreateRoom(CreateRoom createRoom)
         {
-            var userData = createRoom.UserIds
-                .Select(userEmail => _context.Users
-                    .Where(user => user.Email == userEmail)
-                    .AsEnumerable()
-                    .FirstOrDefault())
-                .ToList();
+            var userData = await _context.Users
+                .Where(user => createRoom.UserIds.Contains(user.Email))
+                .ToArrayAsync();
+            var lastAccessDate = DateTime.Now;
 
             var userInfoInRooms = userData
-                .Select(userInfoInRoom => new UserInfoInRoom()
+                .Select(user => new UserInfoInRoom()
                 {
-                    ApplicationUserId = userInfoInRoom.Id,
-                    LatestAccessDate = DateTime.Now
+                    ApplicationUserId = user.Id,
+                    LatestAccessDate = lastAccessDate
                 })
                 .ToList();
 
@@ -121,8 +118,7 @@ namespace blazorTest.Server.Services
         internal async Task DeleteRoom(Guid roomId)
         {
             var room = await _context.Rooms
-                .Where(room => room.Id == roomId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(room => room.Id == roomId);
 
             if (room is not null)
             {

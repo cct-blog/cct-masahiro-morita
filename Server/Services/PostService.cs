@@ -42,8 +42,7 @@ namespace blazorTest.Server.Services
         public async Task<IEnumerable<UserBelongedRoomPost>> ReadUserBelongedRoomPost(string userEmail, DateTime tailDate)
         {
             var user = await _context.Users
-                .Where(user => user.Email == userEmail)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(user => user.Email == userEmail);
             var userId = user.Id;
 
             return await _context.UserInfoInRooms
@@ -62,15 +61,13 @@ namespace blazorTest.Server.Services
         public async Task UpdateLastAccessDate(string userEmail, Guid roomId)
         {
             var user = await _context.Users
-                .Where(user => user.Email == userEmail)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(user => user.Email == userEmail);
             var userId = user.Id;
 
             await ReadUserBelongedRoomPost(userEmail, DateTime.Now);
 
             var userInfoInRoom = await _context.UserInfoInRooms
-                .Where(userInfo => userInfo.ApplicationUserId == userId && userInfo.RoomId == roomId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(userInfo => userInfo.ApplicationUserId == userId && userInfo.RoomId == roomId);
 
             userInfoInRoom.LatestAccessDate = DateTime.Now;
 
