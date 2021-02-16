@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Controllers
 {
+    /// <summary>
+    /// 投稿に関するAPIを提供するクラス
+    /// </summary>
     [Authorize]
     [ApiController]
     [Route("[controller]")]
@@ -19,6 +22,11 @@ namespace blazorTest.Server.Controllers
 
         private readonly PostService _postService;
 
+        /// <summary>
+        /// PostControllerクラスのインスタンスを初期化します。
+        /// </summary>
+        /// <param name="logger">ログ出力用のインスタンス</param>
+        /// <param name="postService">投稿に関するメインの処理を提供するクラス</param>
         public PostController(ILogger<PostController> logger, PostService postService)
         {
             _logger = logger;

@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Controllers
 {
+    /// <summary>
+    /// ルームに関するAPIを提供するクラス
+    /// </summary>
     [Authorize]
     [ApiController]
     [Route("[controller]")]
@@ -18,6 +21,11 @@ namespace blazorTest.Server.Controllers
 
         private readonly RoomService _roomService;
 
+        /// <summary>
+        /// RoomControllerクラスのインスタンスを初期化します。
+        /// </summary>
+        /// <param name="logger">ログ出力用のインスタンス</param>
+        /// <param name="roomService">ルームに関するメインの処理を提供するクラス</param>
         public RoomController(ILogger<RoomController> logger, RoomService roomService)
         {
             _logger = logger;
