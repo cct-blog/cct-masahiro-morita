@@ -82,5 +82,15 @@ namespace blazorTest.Server.Controllers
             await _roomService.DeleteRoom(roomId);
             return NoContent();
         }
+
+        /// <summary>
+        /// 指定したルームからユーザーを削除します。
+        /// </summary>
+        /// <param name="roomId">ユーザーを削除するルームのID</param>
+        /// <param name="userEmail">削除したいユーザーのEmail一覧</param>
+        /// <returns></returns>
+        [HttpDelete("{roomId:guid}/User")]
+        public async Task<RoomDetail> DeleteUserFromRoom(Guid roomId, List<string> userEmail)
+            => await _roomService.DeleteUserFromRoom(userEmail, roomId);
     }
 }
