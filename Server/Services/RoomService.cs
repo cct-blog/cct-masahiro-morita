@@ -126,5 +126,24 @@ namespace blazorTest.Server.Services
                 await _context.SaveChangesAsync();
             }
         }
+
+        internal async Task<RoomDetail> DeleteUserFromRoom(List<string> userEmails, Guid roomId)
+        {
+            var userIds = await _context.Users
+                .Where(user => userEmails.Contains(user.Email))
+                .Select(user => user.Id)
+                .ToListAsync();
+
+            var userInfoInRooms = await _context.UserInfoInRooms
+                .Where(userInfoInRoom => userInfoInRoom.RoomId == roomId
+                    && userIds.Contains(userInfoInRoom.ApplicationUserId))
+                .ToListAsync();
+
+            userInfoInRooms.ForEach(userInfoInRoom => _context.Remove(userInfoInRoom));
+
+            await _context.SaveChangesAsync();
+
+            return await ReadRoomDetailFromId(roomId);
+        }
     }
 }
