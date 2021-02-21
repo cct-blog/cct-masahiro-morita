@@ -4,6 +4,7 @@
 @using System.Text.Json
 @using blazorTest.Shared;
 @using blazorTest.Shared.Models;
+@using blazorTest.Client.Shared.Components;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
@@ -89,7 +90,7 @@
 
     private Guid _roomId;
 
-    private List<User> Users { get; set; } = new List<User>();
+    private List<SelectableContext<UserInformation>> Users { get; set; } = new List<SelectableContext<UserInformation>>();
 
     [Parameter]
     public Guid RoomId
@@ -125,7 +126,7 @@
 
         var roomDetail = await HttpClient.GetFromJsonAsync<RoomDetail>($"room/{_roomId}");
 
-        Users = roomDetail.Users;
+        Users = roomDetail.Users.Select(each => new SelectableContext<UserInformation> { IsSelected = true, IsEnabled = true, Value = each }).ToList();
 
 
         await _hubConnection.StartAsync();
