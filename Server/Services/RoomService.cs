@@ -145,5 +145,22 @@ namespace blazorTest.Server.Services
 
             return await ReadRoomDetailFromId(roomId);
         }
+
+        internal async Task<RoomDetail> PutRoomLastAccessDate(Guid roomId, string userEmail)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(user => user.Email == userEmail);
+            var userId = user.Id;
+
+            var userInfoInRoom = await _context.UserInfoInRooms
+                .FirstOrDefaultAsync(userInfo => userInfo.ApplicationUserId == userId && userInfo.RoomId == roomId);
+
+            userInfoInRoom.LatestAccessDate = DateTime.Now;
+
+            _context.Update(userInfoInRoom);
+            await _context.SaveChangesAsync();
+
+            return await ReadRoomDetailFromId(roomId);
+        }
     }
 }

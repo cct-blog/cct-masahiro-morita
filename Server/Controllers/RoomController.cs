@@ -92,5 +92,17 @@ namespace blazorTest.Server.Controllers
         [HttpDelete("{roomId:guid}/User")]
         public async Task<RoomDetail> DeleteUserFromRoom(Guid roomId, List<string> userEmail)
             => await _roomService.DeleteUserFromRoom(userEmail, roomId);
+
+        /// <summary>
+        /// 指定したルームの最終アクセス日時を更新します。
+        /// </summary>
+        /// <param name="roomId">最終アクセス日時を更新するルームのID</param>
+        /// <returns>更新後のルームの詳細情報</returns>
+        [HttpPut("{roomId:guid}")]
+        public async Task<RoomDetail> PutRoomLastAccessDate(Guid roomId)
+        {
+            var userEmail = User.Identity.Name;
+            return await _roomService.PutRoomLastAccessDate(roomId, userEmail);
+        }
     }
 }
