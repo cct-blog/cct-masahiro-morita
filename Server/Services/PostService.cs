@@ -1,4 +1,6 @@
 ﻿using blazorTest.Server.Data;
+using blazorTest.Server.Exceptions;
+using blazorTest.Shared;
 using blazorTest.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -8,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Services
 {
-    public class PostService : IService
+    public class PostService
     {
         private readonly ApplicationDbContext _context;
 
@@ -20,6 +22,18 @@ namespace blazorTest.Server.Services
         public async Task<IEnumerable<Message>> ReadRoomPost(
             Guid roomId, DateTime tailDate, int MessageCount = 50)
         {
+            var isRoomExsist = await _context.Rooms
+                .AnyAsync(room => room.Id == roomId);
+
+            if (!isRoomExsist)
+            {
+                throw new HttpResponseException()
+                {
+                    Value = "Room Id {1} is not exsisted",
+                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED
+                };
+            }
+
             var roomPost = await _context.Posts
                 .Where(post => post.RoomId.Equals(roomId)
                     && post.CreateDate < tailDate)

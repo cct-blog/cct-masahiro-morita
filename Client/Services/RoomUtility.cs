@@ -15,19 +15,20 @@ namespace blazorTest.Client.Services
         /// </summary>
         /// <param name="roomId">ユーザーを削除するルームのID</param>
         /// <param name="userEmail">`;`で削除するユーザーのEmailを区切った文字列</param>
+        /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
         /// <returns></returns>
-        public static async Task DeleteUserFromRoom(Guid roomId, string userEmail)
+        public static async Task DeleteUserFromRoom(Guid roomId, string userEmail, HttpClient httpClient)
         {
             if (!string.IsNullOrEmpty(userEmail))
             {
                 if (!userEmail.Contains(";"))
                 {
                     string[] userEmailArray = { userEmail };
-                    await RoomUtility.DeleteUserFromRoom(roomId, new List<string>(userEmailArray));
+                    await RoomUtility.DeleteUserFromRoom(roomId, new List<string>(userEmailArray), httpClient);
                 }
                 else
                 {
-                    await RoomUtility.DeleteUserFromRoom(roomId, userEmail.Split(";").ToList());
+                    await RoomUtility.DeleteUserFromRoom(roomId, userEmail.Split(";").ToList(), httpClient);
                 }
             }
         }
@@ -37,24 +38,35 @@ namespace blazorTest.Client.Services
         /// </summary>
         /// <param name="roomId">ユーザーを削除するルームのID</param>
         /// <param name="userEmail">ルームから削除するユーザーのEmailのリスト</param>
+        /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
         /// <returns></returns>
-        public static async Task DeleteUserFromRoom(Guid roomId, List<string> userEmail)
+        public static async Task DeleteUserFromRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
         {
-            var httpClient = new HttpClient();
-            var url = new System.Text.StringBuilder();
-            url.Append("Room/");
-            url.Append(roomId);
-            url.Append("/User");
+            var urlBuilder = new System.Text.StringBuilder();
+            urlBuilder.Append("Room/");
+            urlBuilder.Append(roomId);
+            urlBuilder.Append("/User/");
+            var urlParts = urlBuilder.ToString();
 
-            var response = await httpClient.DeleteWithJsonAsync<List<string>>(url.ToString(), userEmail);
+            userEmails.ForEach(async userEmail =>
+                {
+                    var url = new System.Text.StringBuilder(urlParts);
+
+                    url.Append(userEmail);
+
+                    await httpClient.DeleteAsync(url.ToString());
+                });
+
+            urlBuilder.Clear();
+            urlBuilder.Append("Room/");
+            urlBuilder.Append(roomId);
+
+            var response = await httpClient.GetAsync(urlBuilder.ToString());
             var responseContent = await response.Content.ReadFromJsonAsync<RoomDetail>();
 
             if (responseContent.Users?.Count == 0)
             {
-                url.Clear();
-                url.Append("Room/");
-                url.Append(roomId);
-                await httpClient.DeleteAsync(url.ToString());
+                await httpClient.DeleteAsync(urlBuilder.ToString());
             }
         }
 
@@ -63,18 +75,17 @@ namespace blazorTest.Client.Services
         /// ただし、ルームの最終アクセス日時は更新しません。
         /// </summary>
         /// <param name="roomId">投稿を取得したいルームのID</param>
+        /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
         /// <returns>ルーム内の投稿一覧</returns>
-        public static async Task<List<Message>> RefreshPostInRoom(Guid roomId)
+        public static async Task<List<Message>> RefreshPostInRoom(Guid roomId, HttpClient httpClient)
         {
-            var httpClient = new HttpClient();
-
             var request = new ChatPostPostRequest()
             {
                 RoomId = roomId,
                 NeedMessageTailDate = DateTime.Now
             };
 
-            var response = await httpClient.GetWithJsonAsync<ChatPostPostRequest>("Post", request);
+            var response = await httpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
 
             return await response.Content.ReadFromJsonAsync<List<Message>>();
         }
@@ -84,12 +95,12 @@ namespace blazorTest.Client.Services
         /// ルームの最終アクセス日時も更新します。
         /// </summary>
         /// <param name="roomId">投稿を取得したいルームのID</param>
+        /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
         /// <returns>ルーム内の投稿一覧</returns>
-        public static async Task<List<Message>> InitializeRoom(Guid roomId)
+        public static async Task<List<Message>> InitializeRoom(Guid roomId, HttpClient httpClient)
         {
-            var messages = await RefreshPostInRoom(roomId);
+            var messages = await RefreshPostInRoom(roomId, httpClient);
 
-            var httpClient = new HttpClient();
             var url = new System.Text.StringBuilder();
             url.Append("Room/");
             url.Append(roomId);
