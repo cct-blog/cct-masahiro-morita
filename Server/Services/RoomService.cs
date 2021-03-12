@@ -70,8 +70,9 @@ namespace blazorTest.Server.Services
             {
                 throw new HttpResponseException
                 {
+                    Status = 400,
                     ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
-                    Value = "No User registered"
+                    Value = $"Room Id {id} is not exsisted",
                 };
             }
 
@@ -94,8 +95,9 @@ namespace blazorTest.Server.Services
             {
                 throw new HttpResponseException()
                 {
+                    Status = 400,
                     ErrorType = ErrorType.INVALID_USERS,
-                    Value = "No User registered"
+                    Value = "All users are invalid",
                 };
             }
 
@@ -120,8 +122,9 @@ namespace blazorTest.Server.Services
             {
                 throw new HttpResponseException
                 {
+                    Status = 400,
                     ErrorType = ErrorType.INVALID_USERS,
-                    Value = "No User exsisted"
+                    Value = "All users are invalid"
                 };
             }
 
@@ -160,8 +163,9 @@ namespace blazorTest.Server.Services
             {
                 throw new HttpResponseException()
                 {
+                    Status = 400,
                     ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
-                    Value = "Room Id {1} is already not exsisted"
+                    Value = $"Room Id {roomId} is not exsisted"
                 };
             }
         }
@@ -197,8 +201,9 @@ namespace blazorTest.Server.Services
             {
                 throw new HttpResponseException()
                 {
+                    Status = 400,
                     ErrorType = ErrorType.INVALID_USERS,
-                    Value = "User {1} is not exsisted"
+                    Value = $"Specified User is not exsisted"
                 };
             }
 
@@ -210,6 +215,7 @@ namespace blazorTest.Server.Services
             {
                 throw new HttpResponseException()
                 {
+                    Status = 400,
                     ErrorType = ErrorType.USER_NOT_BELONGED_AT_ROOM,
                     Value = "User is not belonged to room"
                 };

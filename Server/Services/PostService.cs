@@ -22,15 +22,14 @@ namespace blazorTest.Server.Services
         public async Task<IEnumerable<Message>> ReadRoomPost(
             Guid roomId, DateTime tailDate, int MessageCount = 50)
         {
-            var isRoomExsist = await _context.Rooms
-                .AnyAsync(room => room.Id == roomId);
-
-            if (!isRoomExsist)
+            if (!await _context.Rooms
+                .AnyAsync(room => room.Id == roomId))
             {
                 throw new HttpResponseException()
                 {
-                    Value = "Room Id {1} is not exsisted",
-                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED
+                    Status = 400,
+                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
+                    Value = $"Room Id {roomId} is not exsisted",
                 };
             }
 

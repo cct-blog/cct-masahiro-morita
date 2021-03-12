@@ -55,8 +55,9 @@ namespace blazorTest.Server.Controllers
             {
                 throw new HttpResponseException()
                 {
-                    Value = "User not belonged to room",
-                    ErrorType = ErrorType.USER_NOT_BELONGED_AT_ROOM
+                    Status = 400,
+                    ErrorType = ErrorType.USER_NOT_BELONGED_AT_ROOM,
+                    Value = "User is not belonged to room",
                 };
             }
 
