@@ -45,11 +45,11 @@ namespace blazorTest.Server.Hubs
             await Clients.All.SendAsync(SignalRMehod.ReceiveMessage,
                 new Message
                 {
-                    Id = post.Id,
-                    HandleName = message.HandleName,
-                    MessageContext = message.MessageContext,
-                    RoomId = message.RoomId,
-                    UserEmail = message.UserEmail,
+                    Id = updatedPost.Id,
+                    HandleName = user.HandleName,
+                    MessageContext = updatedPost.Text,
+                    RoomId = updatedPost.RoomId,
+                    UserEmail = user.Email,
                     CreateDate = updatedPost.CreateDate
                 });
         }
