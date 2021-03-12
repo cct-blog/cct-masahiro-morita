@@ -1,4 +1,5 @@
 using blazorTest.Server.Data;
+using blazorTest.Server.Exceptions;
 using blazorTest.Server.Hubs;
 using blazorTest.Server.Models;
 using blazorTest.Server.Services;
@@ -46,12 +47,14 @@ namespace blazorTest.Server
 
             services.AddTransient<RoomService>();
             services.AddTransient<PostService>();
+            services.AddTransient<UserService>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
 
             services.AddSignalR();
-            services.AddControllersWithViews();
+            services.AddControllersWithViews(options =>
+                options.Filters.Add(new HttpResponseExceptionFilter()));
             services.AddRazorPages();
             services.AddResponseCompression(opts =>
             {
