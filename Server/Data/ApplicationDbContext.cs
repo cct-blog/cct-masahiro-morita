@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace blazorTest.Server.Data
@@ -20,13 +21,19 @@ namespace blazorTest.Server.Data
 
         public DbSet<Post> Posts { get; set; }
         public DbSet<Room> Rooms { get; set; }
-        public DbSet<Thread> Threads { get; set; }
+        public DbSet<Models.Thread> Threads { get; set; }
         public DbSet<UserInfoInRoom> UserInfoInRooms { get; set; }
 
         public override int SaveChanges()
         {
             SetProperties();
             return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            SetProperties();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
 
         public void SetProperties()

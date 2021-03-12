@@ -39,6 +39,9 @@ namespace blazorTest.Server.Hubs
             _context.Posts.Add(post);
             await _context.SaveChangesAsync();
 
+            var updatedPost = await _context.Posts
+                .FirstOrDefaultAsync(p => p.Id == post.Id);
+
             await Clients.All.SendAsync(SignalRMehod.ReceiveMessage,
                 new Message
                 {
@@ -46,7 +49,8 @@ namespace blazorTest.Server.Hubs
                     HandleName = message.HandleName,
                     MessageContext = message.MessageContext,
                     RoomId = message.RoomId,
-                    UserEmail = message.UserEmail
+                    UserEmail = message.UserEmail,
+                    CreateDate = updatedPost.CreateDate
                 });
         }
     }
