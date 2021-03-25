@@ -48,6 +48,7 @@ namespace blazorTest.Server
             services.AddTransient<RoomService>();
             services.AddTransient<PostService>();
             services.AddTransient<UserService>();
+            services.AddTransient<ThreadService>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
