@@ -37,7 +37,7 @@ namespace blazorTest.Client.Services
         /// ルームから指定したユーザーを削除します。
         /// </summary>
         /// <param name="roomId">ユーザーを削除するルームのID</param>
-        /// <param name="userEmail">ルームから削除するユーザーのEmailのリスト</param>
+        /// <param name="userEmails">ルームから削除するユーザーのEmailのリスト</param>
         /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
         /// <returns></returns>
         public static async Task DeleteUserFromRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
@@ -68,6 +68,25 @@ namespace blazorTest.Client.Services
             {
                 await httpClient.DeleteAsync(urlBuilder.ToString());
             }
+        }
+
+        /// <summary>
+        /// 指定したユーザーをルームに追加します。
+        /// </summary>
+        /// <param name="roomId">ルームのID</param>
+        /// <param name="userEmails">ルームに追加するユーザーのEmailのリスト</param>
+        /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
+        /// <returns></returns>
+        public static async Task AddUsersToRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
+        {
+            var urlBuilder = new System.Text.StringBuilder();
+            urlBuilder.Append("Room/");
+            urlBuilder.Append(roomId);
+            urlBuilder.Append("/User/");
+            var urlParts = urlBuilder.ToString();
+
+            var url = new System.Text.StringBuilder(urlParts);
+            await httpClient.PostAsync(url.ToString(), JsonContent.Create(userEmails));
         }
 
         /// <summary>
