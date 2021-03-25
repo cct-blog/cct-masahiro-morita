@@ -26,7 +26,7 @@ namespace blazorTest.Server.Hubs
                 throw new HubException($"Message length is over 200, yours {messageLength}");
             }
 
-            await SendMention(message.MessageContext);
+            await SendMention(message.MessageContext, message.RoomId);
 
             var user = await _context.Users
                 .FirstOrDefaultAsync(user => user.Email == message.UserEmail);
@@ -64,17 +64,20 @@ namespace blazorTest.Server.Hubs
                 });
         }
 
-        private async Task SendMention(string message)
+        private async Task SendMention(string message, Guid roomId)
         {
             var mentions = MessageAnalyzer.CheckMention(message);
             await Task.WhenAll(mentions.Select(async mention =>
             {
                 var mentionedUser = mention.Value.Substring(1, mention.Length - 2);
 
-                var userData = await _context.Users
-                    .FirstOrDefaultAsync(user => user.HandleName == mentionedUser);
+                var userData = await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.ApplicationUser.HandleName == mentionedUser &&
+                        userInfoInRoom.RoomId == roomId);
 
-                await Clients.User(userData.Email).SendAsync(SignalRMehod.SendMention, message);
+                if (userData is not null) await Clients.User(userData.ApplicationUser.Email)
+                    .SendAsync(SignalRMehod.SendMention, message);
             }));
         }
     }
