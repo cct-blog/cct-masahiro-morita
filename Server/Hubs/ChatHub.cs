@@ -18,6 +18,12 @@ namespace blazorTest.Server.Hubs
 
         public async Task SendMessage(Message message)
         {
+            var messageLength = message.MessageContext.Length;
+            if (message.MessageContext.Length > 200)
+            {
+                throw new HubException($"Message length is over 200, yours {messageLength}");
+            }
+
             var user = await _context.Users
                 .FirstOrDefaultAsync(user => user.Email == message.UserEmail);
 
