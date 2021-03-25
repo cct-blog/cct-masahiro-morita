@@ -98,4 +98,5 @@
         RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
     }
 
+    public void Dispose() => _ = _hubConnection.DisposeAsync();
 }

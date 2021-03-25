@@ -66,14 +66,27 @@ namespace blazorTest.Server.Hubs
 
         private async Task SendMention(string message, Guid roomId)
         {
-            var mentions = MessageAnalyzer.CheckMention(message);
+            var mentions = MessageAnalyzer.GetMentionedUser(message);
+
+            if (mentions.Contains("here"))
+            {
+                var usersBelongedToRoom = await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .Where(userInfoInRoom => userInfoInRoom.RoomId == roomId)
+                    .ToArrayAsync();
+
+                await Task.WhenAll(usersBelongedToRoom.Select(async user =>
+                    await Clients.User(user.ApplicationUser.Email)
+                        .SendAsync(SignalRMehod.SendMention, message)));
+
+                return;
+            }
+
             await Task.WhenAll(mentions.Select(async mention =>
             {
-                var mentionedUser = mention.Value.Substring(1, mention.Length - 2);
-
                 var userData = await _context.UserInfoInRooms
                     .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
-                    .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.ApplicationUser.HandleName == mentionedUser &&
+                    .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.ApplicationUser.HandleName == mention &&
                         userInfoInRoom.RoomId == roomId);
 
                 if (userData is not null) await Clients.User(userData.ApplicationUser.Email)
