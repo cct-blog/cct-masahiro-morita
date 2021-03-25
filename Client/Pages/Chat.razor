@@ -140,7 +140,6 @@
             StateHasChanged();
         });
 
-
         await UpdateUsers();
 
         await _hubConnection.StartAsync();
@@ -262,7 +261,7 @@
 
     private async Task AddUsers()
     {
-        await RoomUtility.AddUsersToRoom(RoomId, Users.Where(each => each.IsEnabled && each.IsEnabled).Select(each => each.Content.Email).ToList(), HttpClient);
+        await RoomUtility.AddUsersToRoom(RoomId, Users.Where(each => each.IsEnabled && each.IsSelected).Select(each => each.Content.Email).ToList(), HttpClient);
 
         await UpdateUsers();
     }
