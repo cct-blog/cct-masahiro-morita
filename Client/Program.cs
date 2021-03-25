@@ -21,6 +21,8 @@ namespace blazorTest.Client
             // Supply HttpClient instances that include access tokens when making requests to the server project
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("blazorTest.ServerAPI"));
 
+            builder.Services.AddScoped<HubUtility>();
+
             builder.Services.AddApiAuthorization();
 
             builder.Services.AddSingleton<IRoomManager, RoomManager>();

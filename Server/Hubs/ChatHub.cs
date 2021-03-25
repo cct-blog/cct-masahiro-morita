@@ -2,6 +2,7 @@
 using blazorTest.Server.Models;
 using blazorTest.Shared;
 using blazorTest.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,8 +17,17 @@ namespace blazorTest.Server.Hubs
 
         public ChatHub(ApplicationDbContext context) => _context = context;
 
+        [Authorize]
         public async Task SendMessage(Message message)
         {
+            var messageLength = message.MessageContext.Length;
+            if (message.MessageContext.Length > 200)
+            {
+                throw new HubException($"Message length is over 200, yours {messageLength}");
+            }
+
+            await SendMention(message.MessageContext, message.RoomId);
+
             var user = await _context.Users
                 .FirstOrDefaultAsync(user => user.Email == message.UserEmail);
 
@@ -52,6 +62,36 @@ namespace blazorTest.Server.Hubs
                     UserEmail = user.Email,
                     CreateDate = updatedPost.CreateDate
                 });
+        }
+
+        private async Task SendMention(string message, Guid roomId)
+        {
+            var mentions = MessageAnalyzer.GetMentionedUser(message);
+
+            if (mentions.Contains("here"))
+            {
+                var usersBelongedToRoom = await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .Where(userInfoInRoom => userInfoInRoom.RoomId == roomId)
+                    .ToArrayAsync();
+
+                await Task.WhenAll(usersBelongedToRoom.Select(async user =>
+                    await Clients.User(user.ApplicationUser.Email)
+                        .SendAsync(SignalRMehod.SendMention, message)));
+
+                return;
+            }
+
+            await Task.WhenAll(mentions.Select(async mention =>
+            {
+                var userData = await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.ApplicationUser.HandleName == mention &&
+                        userInfoInRoom.RoomId == roomId);
+
+                if (userData is not null) await Clients.User(userData.ApplicationUser.Email)
+                    .SendAsync(SignalRMehod.SendMention, message);
+            }));
         }
     }
 }
