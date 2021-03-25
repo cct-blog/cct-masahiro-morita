@@ -1,0 +1,18 @@
+﻿@using blazorTest.Shared.Models
+@using Oniqys.Blazor.Controls
+@using Oniqys.Blazor.ViewModel
+@using blazorTest.Client.Shared
+
+<ListView Items="@Users">
+    <ItemTemplate Context="user">
+        <UserItem Name="@user.HandleName" />
+    </ItemTemplate>
+</ListView>
+
+@code {
+    /// <summary>
+    /// 一覧するユーザー
+    /// </summary>
+    [Parameter]
+    public List<UserInformation> Users { get; set; } = new();
+}

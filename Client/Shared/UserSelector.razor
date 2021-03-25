@@ -1,0 +1,21 @@
+﻿@using blazorTest.Shared.Models
+@using Oniqys.Blazor.ViewModel
+@using Oniqys.Blazor.Controls
+
+<ListView Items="@Users">
+    <ItemTemplate Context="selectableUser">
+        <CheckableItem DataContext="@selectableUser">
+            <DataTemplate Context="user">
+                <UserItem Name="@user.HandleName" />
+            </DataTemplate>
+        </CheckableItem>
+    </ItemTemplate>
+</ListView>
+
+@code {
+    /// <summary>
+    /// 一覧するユーザー
+    /// </summary>
+    [Parameter]
+    public List<Selectable<UserInformation>> Users { get; set; } = new();
+}
