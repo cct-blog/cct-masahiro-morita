@@ -2,6 +2,7 @@
 using blazorTest.Server.Models;
 using blazorTest.Shared;
 using blazorTest.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,6 +17,7 @@ namespace blazorTest.Server.Hubs
 
         public ChatHub(ApplicationDbContext context) => _context = context;
 
+        [Authorize]
         public async Task SendMessage(Message message)
         {
             var messageLength = message.MessageContext.Length;
