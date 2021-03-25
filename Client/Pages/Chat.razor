@@ -4,7 +4,7 @@
 @using System.Text.Json
 @using blazorTest.Shared;
 @using blazorTest.Shared.Models;
-@using blazorTest.Client.Shared.Components;
+@using Oniqys.Blazor.ViewModel;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
@@ -47,10 +47,10 @@
 <div class="layout">
     <AuthorizeView>
         <Authorized>
-            <div>
-                <UserSelector Users="@Users" />
-            </div>
             <div class="content margin-left">
+                <div>
+                    <UserSelector Users="@Users" />
+                </div>
                 @foreach (var message in Messages)
                 {
                     <div id="@message.Id" class="margin">
@@ -90,7 +90,7 @@
 
     private Guid _roomId;
 
-    private List<SelectableContext<UserInformation>> Users { get; set; } = new List<SelectableContext<UserInformation>>();
+    private List<Selectable<UserInformation>> Users { get; set; } = new();
 
     [Parameter]
     public Guid RoomId
@@ -126,7 +126,7 @@
 
         var roomDetail = await HttpClient.GetFromJsonAsync<RoomDetail>($"room/{_roomId}");
 
-        Users = roomDetail.Users.Select(each => new SelectableContext<UserInformation> { IsSelected = true, IsEnabled = true, Value = each }).ToList();
+        Users = roomDetail.Users.Select(each => new Selectable<UserInformation> { IsSelected = true, IsEnabled = false, Content = each }).ToList();
 
 
         await _hubConnection.StartAsync();

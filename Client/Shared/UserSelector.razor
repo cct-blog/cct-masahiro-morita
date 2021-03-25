@@ -1,20 +1,21 @@
-﻿@using blazorTest.Shared.Models;
-@using blazorTest.Client.Shared.Components;
+﻿@using blazorTest.Shared.Models
+@using Oniqys.Blazor.ViewModel
+@using Oniqys.Blazor.Controls
 
-<WrapPanel Items="@Users">
-    <ItemTemplate Context="users">
-        <Selectable Value="@users">
+<ListView Items="@Users">
+    <ItemTemplate Context="selectableUser">
+        <CheckableItem DataContext="@selectableUser">
             <DataTemplate Context="user">
                 <UserItem Name="@user.HandleName" />
             </DataTemplate>
-        </Selectable>
+        </CheckableItem>
     </ItemTemplate>
-</WrapPanel>
+</ListView>
 
 @code {
     /// <summary>
     /// 一覧するユーザー
     /// </summary>
     [Parameter]
-    public List<SelectableContext<UserInformation>> Users { get; set; } = new();
+    public List<Selectable<UserInformation>> Users { get; set; } = new();
 }
