@@ -25,5 +25,15 @@ namespace blazorTest.Server.Services
                 Email = user.Email
             })
             .ToArrayAsync();
+
+        public async Task<bool> CheckUserBelongedToRoom(string userEmail, Guid roomId)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(user => user.Email == userEmail);
+
+            return await _context.UserInfoInRooms
+                .AnyAsync(userInfoInRoom => userInfoInRoom.ApplicationUserId == user.Id &&
+                    userInfoInRoom.RoomId == roomId);
+        }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using blazorTest.Server.Data;
+using blazorTest.Server.Exceptions;
 using blazorTest.Server.Models;
+using blazorTest.Shared;
 using blazorTest.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Server.Services
 {
-    public class RoomService : IService
+    public class RoomService
     {
         private readonly ApplicationDbContext _context;
 
@@ -63,6 +65,17 @@ namespace blazorTest.Server.Services
         internal async Task<RoomDetail> ReadRoomDetailFromId(Guid id)
         {
             var roomQuery = _context.Rooms.Where(room => room.Id == id);
+
+            if (!await roomQuery.AnyAsync())
+            {
+                throw new HttpResponseException
+                {
+                    Status = 400,
+                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
+                    Value = $"Room Id {id} is not exsisted",
+                };
+            }
+
             return await ReadRoomDetail(roomQuery);
         }
 
@@ -77,6 +90,16 @@ namespace blazorTest.Server.Services
             var users = await _context.Users
                 .Where(user => userEmails.Contains(user.Email))
                 .ToListAsync();
+
+            if (!users.Any())
+            {
+                throw new HttpResponseException()
+                {
+                    Status = 400,
+                    ErrorType = ErrorType.INVALID_USERS,
+                    Value = "All users are invalid",
+                };
+            }
 
             users.ForEach(user =>
             {
@@ -94,6 +117,17 @@ namespace blazorTest.Server.Services
             var userData = await _context.Users
                 .Where(user => createRoom.UserIds.Contains(user.Email))
                 .ToArrayAsync();
+
+            if (!userData.Any())
+            {
+                throw new HttpResponseException
+                {
+                    Status = 400,
+                    ErrorType = ErrorType.INVALID_USERS,
+                    Value = "All users are invalid"
+                };
+            }
+
             var lastAccessDate = DateTime.Now;
 
             var userInfoInRooms = userData
@@ -125,25 +159,69 @@ namespace blazorTest.Server.Services
                 _context.Remove(room);
                 await _context.SaveChangesAsync();
             }
+            else
+            {
+                throw new HttpResponseException()
+                {
+                    Status = 400,
+                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
+                    Value = $"Room Id {roomId} is not exsisted"
+                };
+            }
         }
 
-        internal async Task<RoomDetail> DeleteUserFromRoom(List<string> userEmails, Guid roomId)
+        internal async Task<RoomDetail> DeleteUserFromRoom(string userEmail, Guid roomId)
         {
-            var userIds = await _context.Users
-                .Where(user => userEmails.Contains(user.Email))
-                .Select(user => user.Id)
-                .ToListAsync();
+            var userInfoInRoom = await ReadUserFromEmailAndRoomId(userEmail, roomId);
 
-            var userInfoInRooms = await _context.UserInfoInRooms
-                .Where(userInfoInRoom => userInfoInRoom.RoomId == roomId
-                    && userIds.Contains(userInfoInRoom.ApplicationUserId))
-                .ToListAsync();
-
-            userInfoInRooms.ForEach(userInfoInRoom => _context.Remove(userInfoInRoom));
-
+            _context.Remove(userInfoInRoom);
             await _context.SaveChangesAsync();
 
             return await ReadRoomDetailFromId(roomId);
+        }
+
+        internal async Task<RoomDetail> PutRoomLastAccessDate(Guid roomId, string userEmail)
+        {
+            var userInfoInRoom = await ReadUserFromEmailAndRoomId(userEmail, roomId);
+
+            userInfoInRoom.LatestAccessDate = DateTime.Now;
+
+            _context.Update(userInfoInRoom);
+            await _context.SaveChangesAsync();
+
+            return await ReadRoomDetailFromId(roomId);
+        }
+
+        private async Task<UserInfoInRoom> ReadUserFromEmailAndRoomId(string userEmail, Guid roomId)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(user => user.Email == userEmail);
+
+            if (user is null)
+            {
+                throw new HttpResponseException()
+                {
+                    Status = 400,
+                    ErrorType = ErrorType.INVALID_USERS,
+                    Value = $"Specified User is not exsisted"
+                };
+            }
+
+            var userInfoInRoom = await _context.UserInfoInRooms
+                .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.RoomId == roomId
+                    && user.Id == userInfoInRoom.ApplicationUserId);
+
+            if (userInfoInRoom is null)
+            {
+                throw new HttpResponseException()
+                {
+                    Status = 400,
+                    ErrorType = ErrorType.USER_NOT_BELONGED_AT_ROOM,
+                    Value = "User is not belonged to room"
+                };
+            }
+
+            return userInfoInRoom;
         }
     }
 }
