@@ -1,6 +1,7 @@
 ﻿@page "/chat/{roomId:guid}"
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using System.Text.Json
 @using blazorTest.Shared;
 @using blazorTest.Shared.Models;
@@ -8,6 +9,7 @@
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAccessTokenProvider AccessTokenProvider
 @attribute [Authorize]
 @implements IDisposable
 
@@ -106,7 +108,8 @@
     protected override async Task OnInitializedAsync()
     {
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"))
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"), options =>
+                options.AccessTokenProvider = GetAccessTokenAsync)
             .Build();
 
         _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, (message) =>
@@ -154,6 +157,15 @@
         _messageInput = string.Empty;
 
         await _hubConnection.SendAsync(SignalRMehod.SendMessage, message);
+    }
+
+    private async Task<string> GetAccessTokenAsync()
+    {
+        var authTokenState = await AccessTokenProvider.RequestAccessToken();
+        AccessToken accessToken;
+        authTokenState.TryGetToken(out accessToken);
+
+        return accessToken?.Value;
     }
 
     /// <summary>

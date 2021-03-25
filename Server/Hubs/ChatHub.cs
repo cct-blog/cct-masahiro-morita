@@ -26,6 +26,8 @@ namespace blazorTest.Server.Hubs
                 throw new HubException($"Message length is over 200, yours {messageLength}");
             }
 
+            await SendMention(message.MessageContext);
+
             var user = await _context.Users
                 .FirstOrDefaultAsync(user => user.Email == message.UserEmail);
 
@@ -60,6 +62,20 @@ namespace blazorTest.Server.Hubs
                     UserEmail = user.Email,
                     CreateDate = updatedPost.CreateDate
                 });
+        }
+
+        private async Task SendMention(string message)
+        {
+            var mentions = MessageAnalyzer.CheckMention(message);
+            await Task.WhenAll(mentions.Select(async mention =>
+            {
+                var mentionedUser = mention.Value.Substring(1, mention.Length - 2);
+
+                var userData = await _context.Users
+                    .FirstOrDefaultAsync(user => user.HandleName == mentionedUser);
+
+                await Clients.User(userData.Email).SendAsync(SignalRMehod.SendMention, message);
+            }));
         }
     }
 }

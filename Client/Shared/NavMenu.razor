@@ -1,8 +1,11 @@
 ﻿@using blazorTest.Shared.Models
+@using blazorTest.Shared;
+@using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
+@inject IAccessTokenProvider AccessTokenProvider
 @inject IRoomManager RoomManager
 
 <style>
@@ -31,6 +34,7 @@
         </li>
         <AuthorizeView>
             <Authorized>
+                <li class="nav-item px-3">@_mentionMessage</li>
                 @foreach (var room in rooms)
                 {
                     <li class="nav-item px-3">
@@ -50,6 +54,10 @@
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private List<UserRoom> rooms = new List<UserRoom>();
+
+    private HubConnection _hubConnection;
+
+    private string _mentionMessage;
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
@@ -72,6 +80,19 @@
             };
             await UpdateRooms();
         }
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"), options =>
+                options.AccessTokenProvider = GetAccessTokenAsync)
+            .Build();
+
+        _hubConnection.On<string>(SignalRMehod.SendMention, (string content) =>
+        {
+            _mentionMessage = content;
+            StateHasChanged();
+        });
+
+        await _hubConnection.StartAsync();
     }
 
     public async Task OnRoomsChanged() => await UpdateRooms();
@@ -79,6 +100,15 @@
     private async Task UpdateRooms()
     {
         RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
+    }
+
+    private async Task<string> GetAccessTokenAsync()
+    {
+        var authTokenState = await AccessTokenProvider.RequestAccessToken();
+        AccessToken accessToken;
+        authTokenState.TryGetToken(out accessToken);
+
+        return accessToken?.Value;
     }
 
 }
