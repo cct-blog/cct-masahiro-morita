@@ -5,5 +5,7 @@
         public const string ReceiveMessage = nameof(ReceiveMessage);
 
         public const string SendMessage = nameof(SendMessage);
+
+        public const string SendMention = nameof(SendMention);
     }
 }

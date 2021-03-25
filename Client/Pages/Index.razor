@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using blazorTest.Shared.Models
 @using blazorTest.Client.Services
+@using Oniqys.Blazor.ViewModel 
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 @inject IRoomManager RoomManager
@@ -50,6 +51,7 @@
                     <button class="btn btn-primary" @onclick="CreateRoom">新規ルーム作成</button>
                 </div>
             </div>
+            <UserSelector />
         </Authorized>
     </AuthorizeView>
 
@@ -64,6 +66,8 @@
 
     private List<UserRoom> rooms;
 
+    private List<Selectable<UserInformation>> Users { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         RoomManager.RoomChanged += (s, e) =>
@@ -71,6 +75,10 @@
             rooms = e;
             StateHasChanged();
         };
+
+        var users = await HttpClient.GetFromJsonAsync<List<UserInformation>>("User");
+
+        Users = users.Select(each => new Selectable<UserInformation> { Content = each, IsEnabled = true, IsSelected = false }).ToList();
 
         await RefreshRooms();
     }

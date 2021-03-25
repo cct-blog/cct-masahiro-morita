@@ -5,13 +5,17 @@ using blazorTest.Server.Models;
 using blazorTest.Server.Services;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Linq;
@@ -43,6 +47,8 @@ namespace blazorTest.Server
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
+            services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
+
             services.AddTransient<IProfileService, ClaimsFilterProfileService>();
 
             services.AddTransient<RoomService>();
@@ -52,6 +58,9 @@ namespace blazorTest.Server
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IPostConfigureOptions<JwtBearerOptions>,
+                ConfigureJwtBearerOptions>());
 
             services.AddSignalR();
             services.AddControllersWithViews(options =>
