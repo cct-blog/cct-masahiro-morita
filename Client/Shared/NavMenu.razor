@@ -2,10 +2,9 @@
 @using blazorTest.Shared;
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject NavigationManager NavigationManager
+@inject HubUtility HubUtility
 @inject HttpClient HttpClient
-@inject IAccessTokenProvider AccessTokenProvider
 @inject IRoomManager RoomManager
 
 <style>
@@ -81,10 +80,7 @@
             await UpdateRooms();
         }
 
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"), options =>
-                options.AccessTokenProvider = GetAccessTokenAsync)
-            .Build();
+        _hubConnection = HubUtility.CreateHubConnection();
 
         _hubConnection.On<string>(SignalRMehod.SendMention, (string content) =>
         {
@@ -100,15 +96,6 @@
     private async Task UpdateRooms()
     {
         RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
-    }
-
-    private async Task<string> GetAccessTokenAsync()
-    {
-        var authTokenState = await AccessTokenProvider.RequestAccessToken();
-        AccessToken accessToken;
-        authTokenState.TryGetToken(out accessToken);
-
-        return accessToken?.Value;
     }
 
 }
