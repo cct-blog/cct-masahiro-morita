@@ -1,4 +1,5 @@
-﻿using blazorTest.Server.Services;
+﻿using blazorTest.Server.Helper;
+using blazorTest.Server.Services;
 using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
 
 namespace blazorTest.Server.Controllers
 {
@@ -68,8 +70,8 @@ namespace blazorTest.Server.Controllers
         /// <param name="userEmail">追加したいユーザーのEmail一覧</param>
         /// <returns>ユーザーを追加したルームの詳細情報</returns>
         [HttpPost("{roomId:guid}/User")]
-        public async Task<RoomDetail> AddUserToRoom(Guid roomId, List<string> userEmail)
-            => await _roomService.AddUserToRoom(userEmail, roomId);
+        public async Task<ActionResult<RoomDetail>> AddUserToRoom(Guid roomId, List<string> userEmail)
+            => (await this.Execute(() => _roomService.AddUserToRoom(userEmail, roomId))).AsResult();
 
         /// <summary>
         /// 指定したルームを削除します。
@@ -77,10 +79,12 @@ namespace blazorTest.Server.Controllers
         /// <param name="roomId">削除したいルームのID</param>
         /// <returns>No content</returns>
         [HttpDelete("{roomId:guid}")]
-        public async Task<IActionResult> DeleteRoom(Guid roomId)
+        public async Task<ActionResult> DeleteRoom(Guid roomId)
         {
-            await _roomService.DeleteRoom(roomId);
-            return NoContent();
+            return await this.Execute(async () =>
+            {
+                await _roomService.DeleteRoom(roomId);
+            });
         }
 
         /// <summary>
