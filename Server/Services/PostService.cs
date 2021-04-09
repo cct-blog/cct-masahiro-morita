@@ -37,11 +37,11 @@ namespace blazorTest.Server.Services
                 .Where(post => post.RoomId.Equals(roomId)
                     && post.CreateDate < tailDate)
                 .Include(post => post.ApplicationUser)
+                .OrderBy(post => post.CreateDate)
+                .TakeLast(MessageCount)
                 .ToArrayAsync();
 
             return roomPost
-                .OrderBy(post => post.CreateDate)
-                .TakeLast(MessageCount)
                 .Select(post => new Message()
                 {
                     Id = post.Id,
