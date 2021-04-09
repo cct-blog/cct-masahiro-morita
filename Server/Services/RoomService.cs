@@ -20,14 +20,15 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<UserRoom>> ReadRoomListOfUser(string userEmail)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(user => user.Email == userEmail);
-
-            return await _context.UserInfoInRooms
+        /// <summary>
+        /// ユーザーの所属するルームの一覧を取得します。
+        /// </summary>
+        /// <param name="userId">ユーザーId</param>
+        /// <returns></returns>
+        public async Task<IEnumerable<UserRoom>> ReadRooms(string userId)
+            => await _context.UserInfoInRooms
                 .Include(userInfoInRooms => userInfoInRooms.Room)
-                .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == user.Id)
+                .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId)
                 .Select(userInfoInRoom => new UserRoom()
                 {
                     Id = userInfoInRoom.Room.Id,
@@ -35,99 +36,98 @@ namespace blazorTest.Server.Services
                     LastAccessDate = userInfoInRoom.LatestAccessDate
                 })
                 .ToArrayAsync();
+
+        /// <summary>
+        /// IDからRoom情報を取得します。
+        /// </summary>
+        /// <param name="id">ルームId</param>
+        /// <returns></returns>
+        internal async Task<Room> ReadRoom(Guid id)
+            => await _context.Rooms
+                .FirstOrDefaultAsync(room => room.Id == id);
+
+        /// <summary>
+        /// ルーム名からRoomの詳細情報を取得します。
+        /// </summary>
+        /// <param name="name">ルームの名前</param>
+        /// <returns></returns>
+        internal async Task<RoomDetail> ReadRoomDetail(string name)
+        {
+            var room = await _context.Rooms
+                .Include(room => room.UserInfoInRooms)
+                .ThenInclude(userInfoInRooms => userInfoInRooms.ApplicationUser)
+                .FirstOrDefaultAsync(room => room.Name == name);
+
+            return CreateRoomDetail(room);
         }
 
-        private async Task<RoomDetail> ReadRoomDetail(IQueryable<Room> rooms)
+        /// <summary>
+        /// ルームIDからRoomの詳細情報を取得します。
+        /// </summary>
+        /// <param name="id">rルームId</param>
+        /// <returns></returns>
+        internal async Task<RoomDetail> ReadRoomDetail(Guid id)
         {
-            var roomDetail = await rooms
-            .Include(room => room.UserInfoInRooms)
+            var room = await _context.Rooms
+                .Include(room => room.UserInfoInRooms)
                 .ThenInclude(userInfoInRooms => userInfoInRooms.ApplicationUser)
-            .Select(room => new RoomDetail()
+                .FirstOrDefaultAsync(room => room.Id == id);
+
+            return CreateRoomDetail(room);
+        }
+
+        /// <summary>
+        /// DBから取得したRoom情報をRoomDetailの形に加工します。
+        /// </summary>
+        /// <param name="room">Room</param>
+        /// <returns></returns>
+        private RoomDetail CreateRoomDetail(Room room)
+        {
+            if (room is null) return null;
+
+            var userInfoInRooms = room.UserInfoInRooms
+                .Select(userInfoInRoom => new UserInformation()
+                {
+                    HandleName = userInfoInRoom.ApplicationUser.HandleName,
+                    Email = userInfoInRoom.ApplicationUser.Email,
+                    LastAccessDate = userInfoInRoom.LatestAccessDate
+                }).ToList();
+
+            return new RoomDetail()
             {
                 RoomId = room.Id,
                 RoomName = room.Name,
                 CreateDate = room.CreateDate,
                 UpdateDate = room.UpdateDate,
-                Users = room.UserInfoInRooms
-                    .Select(userInfoInRoom => new UserInformation()
-                    {
-                        HandleName = userInfoInRoom.ApplicationUser.HandleName,
-                        Email = userInfoInRoom.ApplicationUser.Email,
-                        LastAccessDate = userInfoInRoom.LatestAccessDate
-                    })
-                .ToList()
-            })
-            .ToArrayAsync();
-
-            return roomDetail.FirstOrDefault();
+                Users = userInfoInRooms
+            };
         }
 
-        internal async Task<RoomDetail> ReadRoomDetailFromId(Guid id)
+        /// <summary>
+        /// ルームにユーザーを追加します。
+        /// </summary>
+        /// <param name="users">追加するApplicationUserの一覧</param>
+        /// <param name="roomId">ルームId</param>
+        /// <returns></returns>
+        internal async Task AddUser(IEnumerable<ApplicationUser> users, Guid roomId)
         {
-            var roomQuery = _context.Rooms.Where(room => room.Id == id);
-
-            if (!await roomQuery.AnyAsync())
-            {
-                throw new HttpResponseException
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
-                    Value = $"Room Id {id} is not exsisted",
-                };
-            }
-
-            return await ReadRoomDetail(roomQuery);
-        }
-
-        internal async Task<RoomDetail> ReadRoomDetailFromName(string name)
-        {
-            var roomQuery = _context.Rooms.Where(room => room.Name == name);
-            return await ReadRoomDetail(roomQuery);
-        }
-
-        internal async Task<RoomDetail> AddUserToRoom(List<string> userEmails, Guid roomId)
-        {
-            var users = await _context.Users
-                .Where(user => userEmails.Contains(user.Email))
-                .ToListAsync();
-
-            if (!users.Any())
-            {
-                throw new HttpResponseException()
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.INVALID_USERS,
-                    Value = "All users are invalid",
-                };
-            }
-
-            users.ForEach(user =>
+            foreach (var user in users)
             {
                 var userInfoInRoom = new UserInfoInRoom() { ApplicationUserId = user.Id, RoomId = roomId };
                 _context.Add(userInfoInRoom);
-            });
-
-            await _context.SaveChangesAsync();
-
-            return await ReadRoomDetailFromId(roomId);
-        }
-
-        internal async Task<RoomDetail> CreateRoom(CreateRoom createRoom)
-        {
-            var userData = await _context.Users
-                .Where(user => createRoom.UserIds.Contains(user.Email))
-                .ToArrayAsync();
-
-            if (!userData.Any())
-            {
-                throw new HttpResponseException
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.INVALID_USERS,
-                    Value = "All users are invalid"
-                };
             }
 
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// ルームを新たに作成します。
+        /// </summary>
+        /// <param name="userData">追加するApplicationUserの一覧</param>
+        /// <param name="roomName">作成するルームの名前</param>
+        /// <returns></returns>
+        internal async Task CreateRoom(IEnumerable<ApplicationUser> userData, string roomName)
+        {
             var lastAccessDate = DateTime.Now;
 
             var userInfoInRooms = userData
@@ -141,87 +141,56 @@ namespace blazorTest.Server.Services
             _context.Rooms
                 .Add(new Room()
                 {
-                    Name = createRoom.RoomName,
+                    Name = roomName,
                     UserInfoInRooms = userInfoInRooms
                 });
             await _context.SaveChangesAsync();
-
-            return await ReadRoomDetailFromName(createRoom.RoomName);
         }
 
-        internal async Task DeleteRoom(Guid roomId)
+        /// <summary>
+        /// ルームを削除します。
+        /// </summary>
+        /// <param name="room">Room</param>
+        /// <returns></returns>
+        internal async Task DeleteRoom(Room room)
         {
-            var room = await _context.Rooms
-                .FirstOrDefaultAsync(room => room.Id == roomId);
-
-            if (room is not null)
-            {
-                _context.Remove(room);
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                throw new HttpResponseException()
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
-                    Value = $"Room Id {roomId} is not exsisted"
-                };
-            }
+            _context.Remove(room);
+            await _context.SaveChangesAsync();
         }
 
-        internal async Task<RoomDetail> DeleteUserFromRoom(string userEmail, Guid roomId)
+        /// <summary>
+        /// ルームからユーザーを削除します。
+        /// </summary>
+        /// <param name="userInfoInRoom">UserInfoInRoom</param>
+        /// <returns></returns>
+        internal async Task DeleteUserInfoInRoom(UserInfoInRoom userInfoInRoom)
         {
-            var userInfoInRoom = await ReadUserFromEmailAndRoomId(userEmail, roomId);
-
             _context.Remove(userInfoInRoom);
             await _context.SaveChangesAsync();
-
-            return await ReadRoomDetailFromId(roomId);
         }
 
-        internal async Task<RoomDetail> PutRoomLastAccessDate(Guid roomId, string userEmail)
+        /// <summary>
+        /// ユーザーがルームにアクセスした最終アクセス日時を更新します。
+        /// </summary>
+        /// <param name="userInfoInRoom">UserInfoInRoom</param>
+        /// <returns></returns>
+        internal async Task PutRoomLastAccessDate(UserInfoInRoom userInfoInRoom)
         {
-            var userInfoInRoom = await ReadUserFromEmailAndRoomId(userEmail, roomId);
-
             userInfoInRoom.LatestAccessDate = DateTime.Now;
 
             _context.Update(userInfoInRoom);
             await _context.SaveChangesAsync();
-
-            return await ReadRoomDetailFromId(roomId);
         }
 
-        private async Task<UserInfoInRoom> ReadUserFromEmailAndRoomId(string userEmail, Guid roomId)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(user => user.Email == userEmail);
-
-            if (user is null)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.INVALID_USERS,
-                    Value = $"Specified User is not exsisted"
-                };
-            }
-
-            var userInfoInRoom = await _context.UserInfoInRooms
+        /// <summary>
+        /// RoomとApplicationUserの中間テーブルを取得します。
+        /// </summary>
+        /// <param name="userId">ユーザーId</param>
+        /// <param name="roomId">ルームId</param>
+        /// <returns></returns>
+        internal async Task<UserInfoInRoom> ReadUserInfoInRoom(string userId, Guid roomId)
+            => await _context.UserInfoInRooms
                 .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.RoomId == roomId
-                    && user.Id == userInfoInRoom.ApplicationUserId);
-
-            if (userInfoInRoom is null)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.USER_NOT_BELONGED_AT_ROOM,
-                    Value = "User is not belonged to room"
-                };
-            }
-
-            return userInfoInRoom;
-        }
+                    && userId == userInfoInRoom.ApplicationUserId);
     }
 }
