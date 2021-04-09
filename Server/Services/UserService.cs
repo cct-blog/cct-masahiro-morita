@@ -1,4 +1,5 @@
 ﻿using blazorTest.Server.Data;
+using blazorTest.Server.Models;
 using blazorTest.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -17,7 +18,11 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<UserInformation>> ReadUsersInfomation()
+        /// <summary>
+        /// すべてのユーザーを取得します。
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IEnumerable<UserInformation>> ReadAllUser()
             => await _context.Users
             .Select(user => new UserInformation()
             {
@@ -26,14 +31,34 @@ namespace blazorTest.Server.Services
             })
             .ToArrayAsync();
 
-        public async Task<bool> CheckUserBelongedToRoom(string userEmail, Guid roomId)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(user => user.Email == userEmail);
-
-            return await _context.UserInfoInRooms
-                .AnyAsync(userInfoInRoom => userInfoInRoom.ApplicationUserId == user.Id &&
+        /// <summary>
+        /// ユーザーがルームに所属しているかを確認します。
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="roomId"></param>
+        /// <returns></returns>
+        public async Task<bool> IsUserBelongedRoom(string userId, Guid roomId)
+            => await _context.UserInfoInRooms
+                .AnyAsync(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId &&
                     userInfoInRoom.RoomId == roomId);
-        }
+
+        /// <summary>
+        /// ユーザーEmail一覧からユーザー情報を取得します。
+        /// </summary>
+        /// <param name="emails">ユーザーEmail一覧</param>
+        /// <returns></returns>
+        public async Task<IEnumerable<ApplicationUser>> ReadUsers(IEnumerable<string> emails)
+            => await _context.Users
+                .Where(user => emails.Contains(user.Email))
+                .ToArrayAsync();
+
+        /// <summary>
+        /// ユーザーEmailからユーザー情報を取得します。
+        /// </summary>
+        /// <param name="email">ユーザーEmail</param>
+        /// <returns></returns>
+        public async Task<ApplicationUser> ReadUser(string email)
+            => await _context.Users
+                .FirstOrDefaultAsync(user => email.Contains(user.Email));
     }
 }
