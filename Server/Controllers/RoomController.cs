@@ -100,11 +100,11 @@ namespace blazorTest.Server.Controllers
 
             if (!users.Any()) return BadRequest("All users are invalid");
 
-            return await this.Execute(async () =>
+            return await this.ExecuteAsync(async () =>
             {
                 await _roomService.AddUser(users, roomId);
                 return await _roomService.ReadRoomDetail(roomId);
-            }).AsResult();
+            }).AsResultAsync();
         }
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace blazorTest.Server.Controllers
 
             if (room is null) return BadRequest();
 
-            return await this.Execute(() => _roomService.DeleteRoom(room));
+            return await this.ExecuteAsync(() => _roomService.DeleteRoom(room));
         }
 
         /// <summary>

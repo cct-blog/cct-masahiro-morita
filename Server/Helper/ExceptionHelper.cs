@@ -10,7 +10,7 @@ namespace blazorTest.Server.Helper
         /// <summary>
         /// 戻り値有りの処理から、定型的な戻り値を得ます。
         /// </summary>
-        public static async Task<(TResult result, ActionResult error)> Execute<TResult>(this ControllerBase controller, Func<Task<TResult>> func, Func<bool> isNotFound = null)
+        public static async Task<(TResult result, ActionResult error)> ExecuteAsync<TResult>(this ControllerBase controller, Func<Task<TResult>> func, Func<bool> isNotFound = null)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace blazorTest.Server.Helper
         /// <summary>
         /// 戻り値無しの処理から、定型的な戻り値を得る。
         /// </summary>
-        public static async Task<ActionResult> Execute(this ControllerBase controller, Func<Task> func, Func<bool> isNotFound = null)
+        public static async Task<ActionResult> ExecuteAsync(this ControllerBase controller, Func<Task> func, Func<bool> isNotFound = null)
         {
             try
             {
@@ -57,7 +57,7 @@ namespace blazorTest.Server.Helper
             }
         }
 
-        public static async Task<ActionResult<TResult>> AsResult<TResult>(this Task<(TResult result, ActionResult error)> args)
+        public static async Task<ActionResult<TResult>> AsResultAsync<TResult>(this Task<(TResult result, ActionResult error)> args)
             => (await args).error as ActionResult<TResult> ?? (await args).result;
 
         private static ActionResult InternalServiceError(this ControllerBase controller, Exception e)
