@@ -57,8 +57,8 @@ namespace blazorTest.Server.Helper
             }
         }
 
-        public static ActionResult<TResult> AsResult<TResult>(this (TResult result, ActionResult error) args)
-            => args.error as ActionResult<TResult> ?? args.result;
+        public static async Task<ActionResult<TResult>> AsResult<TResult>(this Task<(TResult result, ActionResult error)> args)
+            => (await args).error as ActionResult<TResult> ?? (await args).result;
 
         private static ActionResult InternalServiceError(this ControllerBase controller, Exception e)
         {
