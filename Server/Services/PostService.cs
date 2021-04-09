@@ -19,27 +19,26 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Message>> ReadRoomPost(
+        /// <summary>
+        /// ルーム内の投稿を取得します。
+        /// </summary>
+        /// <param name="roomId">リームId</param>
+        /// <param name="tailDate">取得する投稿の末日時</param>
+        /// <param name="MessageCount">取得するメッセージの数</param>
+        /// <returns></returns>
+        public async Task<IEnumerable<Message>> ReadPost(
             Guid roomId, DateTime tailDate, int MessageCount = 50)
         {
-            if (!await _context.Rooms
-                .AnyAsync(room => room.Id == roomId))
-            {
-                throw new HttpResponseException()
-                {
-                    Status = 400,
-                    ErrorType = ErrorType.ROOM_IS_NOT_EXSISTED,
-                    Value = $"Room Id {roomId} is not exsisted",
-                };
-            }
-
             var roomPost = await _context.Posts
-                .Where(post => post.RoomId.Equals(roomId)
-                    && post.CreateDate < tailDate)
                 .Include(post => post.ApplicationUser)
+                .Where(post => post.RoomId == roomId
+                    && post.CreateDate < tailDate)
                 .OrderBy(post => post.CreateDate)
-                .TakeLast(MessageCount)
                 .ToArrayAsync();
+
+            roomPost = roomPost
+                .TakeLast(MessageCount)
+                .ToArray();
 
             return roomPost
                 .Select(post => new Message()
@@ -50,42 +49,6 @@ namespace blazorTest.Server.Services
                     HandleName = post.ApplicationUser.HandleName,
                     CreateDate = post.CreateDate
                 });
-        }
-
-        public async Task<IEnumerable<UserBelongedRoomPost>> ReadUserBelongedRoomPost(string userEmail, DateTime tailDate)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(user => user.Email == userEmail);
-            var userId = user.Id;
-
-            return await _context.UserInfoInRooms
-                .Where(userRoom => userRoom.ApplicationUserId == userId)
-                .Include(userRoom => userRoom.Room)
-                .ThenInclude(room => room.Posts
-                    .Where(post => post.CreateDate > tailDate))
-                .Select(userRoom => new UserBelongedRoomPost()
-                {
-                    RoomId = userRoom.RoomId,
-                    Texts = userRoom.Room.Posts.Select(post => post.Text).AsEnumerable()
-                })
-                .ToArrayAsync();
-        }
-
-        public async Task UpdateLastAccessDate(string userEmail, Guid roomId)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(user => user.Email == userEmail);
-            var userId = user.Id;
-
-            await ReadUserBelongedRoomPost(userEmail, DateTime.Now);
-
-            var userInfoInRoom = await _context.UserInfoInRooms
-                .FirstOrDefaultAsync(userInfo => userInfo.ApplicationUserId == userId && userInfo.RoomId == roomId);
-
-            userInfoInRoom.LatestAccessDate = DateTime.Now;
-
-            _context.Update(userInfoInRoom);
-            await _context.SaveChangesAsync();
         }
     }
 }

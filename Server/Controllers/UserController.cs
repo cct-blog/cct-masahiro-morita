@@ -38,6 +38,6 @@ namespace blazorTest.Server.Controllers
         /// </summary>
         /// <returns>全ユーザー一覧</returns>
         [HttpGet]
-        public async Task<IEnumerable<UserInformation>> Get() => await _userService.ReadUsersInfomation();
+        public async Task<IEnumerable<UserInformation>> Get() => await _userService.ReadAllUser();
     }
 }
