@@ -1,4 +1,5 @@
-﻿using blazorTest.Server.Services;
+﻿using blazorTest.Server.Helper;
+using blazorTest.Server.Services;
 using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 
 namespace blazorTest.Server.Controllers
 {
@@ -98,9 +100,11 @@ namespace blazorTest.Server.Controllers
 
             if (!users.Any()) return BadRequest("All users are invalid");
 
-            await _roomService.AddUser(users, roomId);
-
-            return Ok(await _roomService.ReadRoomDetail(roomId));
+            return await this.ExecuteAsync(async () =>
+            {
+                await _roomService.AddUser(users, roomId);
+                return await _roomService.ReadRoomDetail(roomId);
+            }).AsResultAsync();
         }
 
         /// <summary>
@@ -109,15 +113,14 @@ namespace blazorTest.Server.Controllers
         /// <param name="roomId">削除したいルームのID</param>
         /// <returns>No content</returns>
         [HttpDelete("{roomId:guid}")]
-        public async Task<IActionResult> DeleteRoom(Guid roomId)
+        public async Task<ActionResult> DeleteRoom(Guid roomId)
         {
             var room = await _roomService
                 .ReadRoom(roomId);
 
             if (room is null) return BadRequest();
 
-            await _roomService.DeleteRoom(room);
-            return NoContent();
+            return await this.ExecuteAsync(() => _roomService.DeleteRoom(room));
         }
 
         /// <summary>
