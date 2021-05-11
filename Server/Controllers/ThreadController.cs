@@ -1,9 +1,11 @@
 ﻿using blazorTest.Server.Helper;
 using blazorTest.Server.Hubs;
 using blazorTest.Server.Services;
+using blazorTest.Shared;
 using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -26,7 +28,9 @@ namespace blazorTest.Server.Controllers
 
         private readonly UserService _userService;
 
-        private readonly ChatHub _chatHub;
+        private readonly RoomService _roomService;
+
+        private readonly IHubContext<ChatHub> _hubContext;
 
         /// <summary>
         /// ThreadControllerクラスのインスタンスを初期化します。
@@ -34,13 +38,15 @@ namespace blazorTest.Server.Controllers
         /// <param name="logger">ログ出力用のインスタンス</param>
         /// <param name="service">スレッドに関するメインの処理を提供するクラス</param>
         /// <param name="userService">ユーザーに関するメインの処理を提供するクラス</param>
-        /// <param name="chatHub">SignarlR Connection Hub</param>
-        public ThreadController(ILogger<ThreadController> logger, ThreadService service, UserService userService, ChatHub chatHub)
+        /// <param name="roomService">ルームに関するメインの処理を提供するクラス</param>
+        /// <param name="hubContext">HubContext</param>
+        public ThreadController(ILogger<ThreadController> logger, ThreadService service, UserService userService, IHubContext<ChatHub> hubContext, RoomService roomService)
         {
             _logger = logger;
             _service = service;
             _userService = userService;
-            _chatHub = chatHub;
+            _hubContext = hubContext;
+            _roomService = roomService;
         }
 
         /// <summary>
@@ -80,8 +86,9 @@ namespace blazorTest.Server.Controllers
                 var threadId = await _service.CreateThread(message, user.Id);
 
                 var thread = await _service.ReadThreadMessage(threadId);
-                await _chatHub.SendMention(message.MessageContext, thread.RoomId);
+                await SendMention(message.MessageContext, thread.RoomId);
 
+                await _hubContext.Clients.All.SendAsync(SignalRMehod.SendThreadMessage, thread);
                 return thread;
             }).AsResultAsync();
         }
@@ -108,5 +115,29 @@ namespace blazorTest.Server.Controllers
                 var thread = await _service.ReadThread(threadId);
                 await _service.DeleteThread(thread);
             });
+
+        private async Task SendMention(string message, Guid roomId)
+        {
+            var mentions = MessageAnalyzer.GetMentionedUser(message);
+
+            if (mentions.Contains("here"))
+            {
+                var usersBelongedToRoom = await _roomService.ReadUsersBelongedToRoom(roomId);
+
+                await Task.WhenAll(usersBelongedToRoom.Select(async user =>
+                    await _hubContext.Clients.User(user.ApplicationUser.Email)
+                        .SendAsync(SignalRMehod.SendMention, message)));
+
+                return;
+            }
+
+            await Task.WhenAll(mentions.Select(async mention =>
+            {
+                var userData = await _userService.ReadUser(mention, roomId);
+
+                if (userData is not null) await _hubContext.Clients.User(userData.ApplicationUser.Email)
+                    .SendAsync(SignalRMehod.SendMention, message);
+            }));
+        }
     }
 }

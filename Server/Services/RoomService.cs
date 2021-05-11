@@ -192,5 +192,16 @@ namespace blazorTest.Server.Services
             => await _context.UserInfoInRooms
                 .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.RoomId == roomId
                     && userId == userInfoInRoom.ApplicationUserId);
+
+        /// <summary>
+        /// Roomに所属するすべてのユーザーを取得します。
+        /// </summary>
+        /// <param name="roomId">ルームId</param>
+        /// <returns>UserInfoInRoomの配列</returns>
+        internal async Task<IEnumerable<UserInfoInRoom>> ReadUsersBelongedToRoom(Guid roomId)
+            => await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .Where(userInfoInRoom => userInfoInRoom.RoomId == roomId)
+                    .ToArrayAsync();
     }
 }

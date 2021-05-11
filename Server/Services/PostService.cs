@@ -2,6 +2,7 @@
 using blazorTest.Server.Exceptions;
 using blazorTest.Shared;
 using blazorTest.Shared.Models;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

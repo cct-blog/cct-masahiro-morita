@@ -55,7 +55,6 @@ namespace blazorTest.Server
             services.AddTransient<PostService>();
             services.AddTransient<UserService>();
             services.AddTransient<ThreadService>();
-            services.AddTransient<ChatHub>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
