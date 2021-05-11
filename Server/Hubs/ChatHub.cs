@@ -64,7 +64,7 @@ namespace blazorTest.Server.Hubs
                 });
         }
 
-        private async Task SendMention(string message, Guid roomId)
+        internal async Task SendMention(string message, Guid roomId)
         {
             var mentions = MessageAnalyzer.GetMentionedUser(message);
 
