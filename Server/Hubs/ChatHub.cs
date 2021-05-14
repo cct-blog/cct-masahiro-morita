@@ -16,15 +16,17 @@ namespace blazorTest.Server.Hubs
     {
         private readonly ApplicationDbContext _context;
 
-        private readonly RoomService _roomService;
+        private readonly PostService _postService;
 
-        private readonly UserService _userService;
-
-        public ChatHub(ApplicationDbContext context, RoomService roomService, UserService userService)
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="postService"></param>
+        public ChatHub(ApplicationDbContext context, PostService postService)
         {
             _context = context;
-            _roomService = roomService;
-            _userService = userService;
+            _postService = postService;
         }
 
         [Authorize]
@@ -36,7 +38,7 @@ namespace blazorTest.Server.Hubs
                 throw new HubException($"Message length is over 200, yours {messageLength}");
             }
 
-            await SendMention(message.MessageContext, message.RoomId);
+            await _postService.SendMention(message.MessageContext, message.RoomId);
 
             var user = await _context.Users
                 .FirstOrDefaultAsync(user => user.Email == message.UserEmail);
@@ -72,30 +74,6 @@ namespace blazorTest.Server.Hubs
                     UserEmail = user.Email,
                     CreateDate = updatedPost.CreateDate
                 });
-        }
-
-        private async Task SendMention(string message, Guid roomId)
-        {
-            var mentions = MessageAnalyzer.GetMentionedUser(message);
-
-            if (mentions.Contains("here"))
-            {
-                var usersBelongedToRoom = await _roomService.ReadUsersBelongedToRoom(roomId);
-
-                await Task.WhenAll(usersBelongedToRoom.Select(async user =>
-                    await Clients.User(user.ApplicationUser.Email)
-                        .SendAsync(SignalRMehod.SendMention, message)));
-
-                return;
-            }
-
-            await Task.WhenAll(mentions.Select(async mention =>
-            {
-                var userData = await _userService.ReadUser(mention, roomId);
-
-                if (userData is not null) await Clients.User(userData.ApplicationUser.Email)
-                    .SendAsync(SignalRMehod.SendMention, message);
-            }));
         }
     }
 }

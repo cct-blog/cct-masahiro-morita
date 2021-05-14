@@ -28,9 +28,7 @@ namespace blazorTest.Server.Controllers
 
         private readonly UserService _userService;
 
-        private readonly RoomService _roomService;
-
-        private readonly IHubContext<ChatHub> _hubContext;
+        private readonly PostService _postService;
 
         /// <summary>
         /// ThreadControllerクラスのインスタンスを初期化します。
@@ -38,15 +36,13 @@ namespace blazorTest.Server.Controllers
         /// <param name="logger">ログ出力用のインスタンス</param>
         /// <param name="service">スレッドに関するメインの処理を提供するクラス</param>
         /// <param name="userService">ユーザーに関するメインの処理を提供するクラス</param>
-        /// <param name="roomService">ルームに関するメインの処理を提供するクラス</param>
-        /// <param name="hubContext">HubContext</param>
-        public ThreadController(ILogger<ThreadController> logger, ThreadService service, UserService userService, IHubContext<ChatHub> hubContext, RoomService roomService)
+        /// <param name="postService">投稿に関するメインの処理を提供するクラス</param>
+        public ThreadController(ILogger<ThreadController> logger, ThreadService service, UserService userService, PostService postService)
         {
             _logger = logger;
             _service = service;
             _userService = userService;
-            _hubContext = hubContext;
-            _roomService = roomService;
+            _postService = postService;
         }
 
         /// <summary>
@@ -86,13 +82,18 @@ namespace blazorTest.Server.Controllers
                 var threadId = await _service.CreateThread(message, user.Id);
 
                 var thread = await _service.ReadThreadMessage(threadId);
-                await SendMention(message.MessageContext, thread.RoomId);
+                await _postService.SendMention(message.MessageContext, thread.RoomId);
 
-                await _hubContext.Clients.All.SendAsync(SignalRMehod.SendThreadMessage, thread);
+                await _postService.SendMessage(SignalRMehod.SendThreadMessage, thread);
                 return thread;
             }).AsResultAsync();
         }
 
+        /// <summary>
+        /// スレッドの投稿を更新します。
+        /// </summary>
+        /// <param name="message">更新したいメッセージの内容</param>
+        /// <returns></returns>
         [HttpPut]
         public async Task<ActionResult<ThreadMessage>> UpdateThread(ThreadMessage message)
         {
@@ -108,6 +109,11 @@ namespace blazorTest.Server.Controllers
             }).AsResultAsync();
         }
 
+        /// <summary>
+        /// 投稿したスレッドを削除します。
+        /// </summary>
+        /// <param name="threadId">削除するスレッドのId</param>
+        /// <returns></returns>
         [HttpDelete("{threadId:guid}")]
         public async Task<ActionResult> DeleteThread(Guid threadId)
             => await this.ExecuteAsync(async () =>
@@ -115,29 +121,5 @@ namespace blazorTest.Server.Controllers
                 var thread = await _service.ReadThread(threadId);
                 await _service.DeleteThread(thread);
             });
-
-        private async Task SendMention(string message, Guid roomId)
-        {
-            var mentions = MessageAnalyzer.GetMentionedUser(message);
-
-            if (mentions.Contains("here"))
-            {
-                var usersBelongedToRoom = await _roomService.ReadUsersBelongedToRoom(roomId);
-
-                await Task.WhenAll(usersBelongedToRoom.Select(async user =>
-                    await _hubContext.Clients.User(user.ApplicationUser.Email)
-                        .SendAsync(SignalRMehod.SendMention, message)));
-
-                return;
-            }
-
-            await Task.WhenAll(mentions.Select(async mention =>
-            {
-                var userData = await _userService.ReadUser(mention, roomId);
-
-                if (userData is not null) await _hubContext.Clients.User(userData.ApplicationUser.Email)
-                    .SendAsync(SignalRMehod.SendMention, message);
-            }));
-        }
     }
 }
