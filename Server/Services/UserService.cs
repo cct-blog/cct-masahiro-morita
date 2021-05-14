@@ -60,5 +60,17 @@ namespace blazorTest.Server.Services
         public async Task<ApplicationUser> ReadUser(string email)
             => await _context.Users
                 .FirstOrDefaultAsync(user => email.Contains(user.Email));
+
+        /// <summary>
+        /// ルームIdとハンドルネームからユーザー情報を取得します。
+        /// </summary>
+        /// <param name="handleName">ハンドルネーム</param>
+        /// <param name="roomId">ルームId</param>
+        /// <returns>UserInfoInRoom</returns>
+        internal async Task<UserInfoInRoom> ReadUser(string handleName, Guid roomId)
+            => await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.ApplicationUser.HandleName == handleName &&
+                        userInfoInRoom.RoomId == roomId);
     }
 }

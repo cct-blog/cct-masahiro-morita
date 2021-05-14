@@ -19,5 +19,9 @@ namespace blazorTest.Server.Models
         public DateTime CreateDate { get; set; }
 
         public DateTime UpdateDate { get; set; }
+
+        public ApplicationUser ApplicationUser { get; set; }
+
+        public Post Post { get; set; }
     }
 }

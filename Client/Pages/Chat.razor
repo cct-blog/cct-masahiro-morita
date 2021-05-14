@@ -67,12 +67,27 @@
                 <div style="margin-top: 10px;">
                     <UserSelector Users="@Users" />
                 </div>
+                <div class="@IsCollapsed">
+                    @foreach (var thread in Threads)
+                    {
+                        <div id="@thread.ThreadId" class="margin">
+                            <PostItem Name="@thread.HandleName" Message="@thread.MessageContext" CreateDate="@thread.CreateDate" />
+                        </div>
+                    }
+                    <div class="form-group margin-left input">
+                        <div class="row margin">
+                            <textarea class="col margin inputbox" value="@_threadMessageInput" @oninput="OnThreadInput" id="threadMessageInput" />
+                            <button class="col-md-auto margin btn btn-primary" id="threadSender" @onclick="SendThread">送信</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="content margin-left">
                 @foreach (var message in Messages)
                 {
                     <div id="@message.Id" class="margin">
                         <PostItem Name="@message.HandleName" Message="@message.MessageContext" CreateDate="@message.CreateDate" />
+                        <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenThread(message.Id))">Threadを開く</button>
                     </div>
                 }
             </div>
@@ -108,6 +123,63 @@
 
     private Guid _roomId;
 
+    private bool collapseThreadtab = true;
+
+    private string IsCollapsed => collapseThreadtab ? "collapse" : null;
+
+    private string _threadMessageInput;
+
+    private Guid _threadPostId;
+
+    private List<ThreadMessage> Threads = new List<ThreadMessage>();
+
+    private async Task OpenThread(Guid id)
+    {
+        if (collapseThreadtab)
+        {
+            _threadPostId = id;
+            collapseThreadtab = false;
+            Threads = await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + id.ToString());
+
+            return;
+        }
+        else if (_threadPostId == id)
+        {
+            _threadPostId = Guid.Empty;
+            collapseThreadtab = true;
+        }
+        else
+        {
+            _threadPostId = id;
+            Threads = await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + id.ToString());
+
+        }
+    }
+
+    private void OnThreadInput(ChangeEventArgs e)
+    {
+        _threadMessageInput = e.Value.ToString();
+    }
+
+    private async Task SendThread()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var message = new ThreadMessage()
+        {
+            ThreadId = Guid.Empty,
+            PostId = _threadPostId,
+            UserEmail = authState.User.Identity.Name,
+            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
+            MessageContext = _threadMessageInput,
+            RoomId = RoomId
+        };
+
+        _threadMessageInput = string.Empty;
+
+        await HttpClient.PostAsJsonAsync("Thread", message);
+    }
+
     private List<Selectable<UserInformation>> Users { get; set; } = new();
 
     [Parameter]
@@ -140,6 +212,14 @@
             StateHasChanged();
         });
 
+        _hubConnection.On<ThreadMessage>(SignalRMehod.SendThreadMessage, (message) =>
+        {
+            if (_threadPostId != message.PostId) return;
+
+            Threads.Add(message);
+            StateHasChanged();
+        });
+
         await UpdateUsers();
 
         await _hubConnection.StartAsync();
@@ -158,7 +238,7 @@
         await base.OnAfterRenderAsync(firstRender);
 
         NavigateToLast();
-        await Focus("messageInput");
+        //await Focus("messageInput");
     }
 
     private async Task UpdateUsers()
