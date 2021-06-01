@@ -22,22 +22,22 @@ namespace blazorTest.Server.Services.Tests
             Fixture = new PostServiceBase();
         }
 
-        [TestMethod()]
-        public async Task ReadPostWhenWindowOpenedTest()
-        {
-            using var transaction = Fixture.Connection.BeginTransaction();
-            using var context = Fixture.CreateContext(transaction);
+        // [TestMethod()]
+        // public async Task ReadPostWhenWindowOpenedTest()
+        // {
+        //     using var transaction = Fixture.Connection.BeginTransaction();
+        //     using var context = Fixture.CreateContext(transaction);
 
-            var roomId = context.Rooms
-                .Where(room => room.Name == "room1")
-                .Single()
-                .Id;
+        //     var roomId = context.Rooms
+        //         .Where(room => room.Name == "room1")
+        //         .Single()
+        //         .Id;
 
-            var service = new PostService(context);
+        //     var service = new PostService(context);
 
-            var result = await service.ReadPost(roomId, DateTime.Now, 50);
+        //     var result = await service.ReadPost(roomId, DateTime.Now, 50);
 
-            Assert.AreEqual(50, result.Count());
-        }
+        //     Assert.AreEqual(50, result.Count());
+        // }
     }
 }
