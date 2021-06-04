@@ -32,8 +32,12 @@ namespace blazorTest.Server.Hubs
         [Authorize]
         public async Task SendMessage(Message message)
         {
+            if (message.MessageContext == null)
+            {
+                throw new HubException($"Message is null,");
+            }
             var messageLength = message.MessageContext.Length;
-            if (message.MessageContext.Length > 200)
+            if (messageLength > 200)
             {
                 throw new HubException($"Message length is over 200, yours {messageLength}");
             }

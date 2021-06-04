@@ -6,6 +6,7 @@
 @using blazorTest.Shared;
 @using blazorTest.Shared.Models;
 @using Oniqys.Blazor.ViewModel;
+@using Oniqys.Blazor.Controls;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
@@ -13,6 +14,7 @@
 @inject HubUtility HubUtility
 @attribute [Authorize]
 @implements IDisposable
+@implements Chat.IPresenter
 
 <style type="text/css">
     .layout {
@@ -67,7 +69,7 @@
                     <button class="col-md-auto margin btn btn-danger" @onclick="LeaveRoom">退室</button>
                 </div>
                 <div style="margin-top: 10px;">
-                    <UserSelector Users="@Users" />
+                    <UserSelector Users="@ViewModel.Users" />
                 </div>
                 <div class="@IsCollapsed">
                     @foreach (var thread in Threads)
@@ -95,8 +97,8 @@
             </div>
             <div class="form-group margin-left input">
                 <div class="row margin">
-                    <textarea class="col margin inputbox" value="@_messageInput" @oninput="OnInput" @onkeydown="OnKeyDown" id="messageInput" />
-                    <button class="col-md-auto margin btn btn-primary" id="sender" @onclick="Send">送信(Alt+Enter)</button>
+                    <textarea class="col margin inputbox" @bind="@ViewModel.InputText" @onkeydown="OnKeyDown" id="messageInput" />
+                    <Button Class="col-md-auto margin btn btn-primary" Context="button_context" DataContext="ViewModel.MessageSender">送信(Alt+Enter)</Button>
                 </div>
             </div>
             <AnchorNavigation />
@@ -105,9 +107,40 @@
 </div>
 
 @code {
-    private HubConnection _hubConnection;
 
-    private string _messageInput;
+    public record UserInfo
+    {
+        public string Id { get; init; }
+
+        public string Name { get; init; }
+    }
+
+    public interface IPresenter
+    {
+        Task<UserInfo> GetUserAsync();
+
+        HttpClient GetHttpClient();
+
+        NavigationManager GetNavigationManager();
+
+        HubConnection GetHabConnection();
+    }
+
+    public async Task<UserInfo> GetUserAsync()
+    {
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+
+        return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
+    }
+
+
+    public HttpClient GetHttpClient() => HttpClient;
+
+    public NavigationManager GetNavigationManager() => NavigationManager;
+
+    public HubConnection GetHabConnection() => _hubConnection;
+
+    private HubConnection _hubConnection;
 
     List<Message> _messages = new List<Message>();
 
@@ -182,9 +215,7 @@
         await HttpClient.PostAsJsonAsync("Thread", message);
     }
 
-    private List<Selectable<UserInformation>> Users { get; set; } = new();
-
-    private ChatViewModel ViewModel { get; set; } = new();
+    private ChatViewModel ViewModel { get; set; }
 
     [Parameter]
     public Guid RoomId
@@ -196,6 +227,8 @@
                 return;
 
             _roomId = value;
+            // TODO  :  ここを綺麗にしたい
+            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
             _fragment = null;
             Messages = new List<Message>();
         }
@@ -205,6 +238,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+
         _hubConnection = HubUtility.CreateHubConnection();
 
         _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, (message) =>
@@ -253,30 +288,16 @@
 
         var allUsers = await HttpClient.GetFromJsonAsync<List<UserInformation>>($"user");
 
-        Users = allUsers.Select(each =>
+
+        ViewModel.Users.Clear();
+        foreach (var user in allUsers.Select(each =>
         {
             var exist = localUsers.Contains(each.Email);
             return new Selectable<UserInformation> { IsSelected = exist, IsEnabled = !exist, Content = each };
-        }).ToList();
-    }
-
-    private async Task Send()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-
-        var message = new Message()
+        }))
         {
-            Id = Guid.Empty,
-            UserEmail = authState.User.Identity.Name,
-            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
-            MessageContext = _messageInput,
-            RoomId = RoomId
-        };
-
-        _fragment = null;
-        _messageInput = string.Empty;
-
-        await _hubConnection.SendAsync(SignalRMehod.SendMessage, message);
+            ViewModel.Users.Add(user);
+        }
     }
 
     /// <summary>
@@ -313,19 +334,14 @@
         }
     }
 
-    private void OnInput(ChangeEventArgs e)
-    {
-        _messageInput = e.Value.ToString();
-    }
-
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
         if (e.AltKey && (e.Code == "Enter" || e.Code == "NumpadEnter"))
         {
-            if (string.IsNullOrWhiteSpace(_messageInput))
+            if (string.IsNullOrWhiteSpace(ViewModel.InputText))
                 return;
 
-            await Send();
+            await ViewModel.MessageSender.Command.Execute();
         }
     }
 
@@ -345,7 +361,7 @@
 
     private async Task AddUsers()
     {
-        await RoomUtility.AddUsersToRoom(RoomId, Users.Where(each => each.IsEnabled && each.IsSelected).Select(each => each.Content.Email).ToList(), HttpClient);
+        await RoomUtility.AddUsersToRoom(RoomId, ViewModel.Users.Where(each => each.IsEnabled && each.IsSelected).Select(each => each.Content.Email).ToList(), HttpClient);
 
         await UpdateUsers();
     }

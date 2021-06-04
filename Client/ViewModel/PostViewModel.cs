@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Client.ViewModel
 {
-    public class UserViewModel : ContentBase
+    public class PostViewModel : ContentBase
     {
-        public string Id { get; init; }
-
-        public string Name { get; set; }
     }
 }
