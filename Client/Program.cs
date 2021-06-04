@@ -1,3 +1,4 @@
+using blazorTest.Client.Models;
 using blazorTest.Client.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
