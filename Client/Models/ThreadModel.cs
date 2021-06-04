@@ -24,7 +24,7 @@ namespace blazorTest.Client.Models
 
         public DateTime CreateDate { get; set; }
 
-        public event ChangeThreadMessageEventHandler ChangeMessage;
+        public static event ChangeThreadMessageEventHandler ChangeMessage;
 
         public async Task ChangeThreadMessage(ThreadMessage threadMessage, HttpClient httpClient)
         {

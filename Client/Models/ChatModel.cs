@@ -11,6 +11,10 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Client.Models
 {
+    public delegate void InOutUserEventHandler();
+
+    public delegate void ChangePostCountEventHandler();
+
     public class ChatModel
     {
         public List<PostModel> PostModels { get; set; }
@@ -22,6 +26,10 @@ namespace blazorTest.Client.Models
         public List<UserInformation> AllUser { get; set; }
 
         public Guid RoomId { get; private set; }
+
+        public static event InOutUserEventHandler InOutUser;
+
+        public static event ChangePostCountEventHandler ChangePost;
 
         public async Task InitializeChatRoom(Guid roomId, HttpClient httpClient)
         {
@@ -46,26 +54,60 @@ namespace blazorTest.Client.Models
             var response = await httpClient.PostAsJsonAsync("Post", request);
             var messages = await response.Content.ReadFromJsonAsync<List<Message>>();
 
-            PostModels = messages.Select(message => new PostModel()
+            var postModelTask = await Task.WhenAll(messages.Select(async message =>
             {
-                UserEmail = message.UserEmail,
-                HandleName = message.HandleName,
-                PostId = message.Id,
-                MessageContext = message.MessageContext,
-                CreateDate = message.CreateDate
-            }).ToList();
+                var threadMessages = await httpClient.GetFromJsonAsync<IEnumerable<ThreadMessage>>($"Post/{message.Id}");
+
+                return new PostModel()
+                {
+                    UserEmail = message.UserEmail,
+                    HandleName = message.HandleName,
+                    PostId = message.Id,
+                    MessageContext = message.MessageContext,
+                    CreateDate = message.CreateDate,
+                    ThreadModels = threadMessages
+                        .Select(threadMessage => new ThreadModel()
+                        {
+                            UserEmail = threadMessage.UserEmail,
+                            HandleName = threadMessage.HandleName,
+                            ThreadId = threadMessage.ThreadId,
+                            MessageContext = threadMessage.MessageContext,
+                            CreateDate = threadMessage.CreateDate
+                        }).ToList()
+                };
+            }));
+
+            PostModels = postModelTask.ToList();
         }
 
         public async Task AddUsersAsync(List<string> userEmails, HttpClient httpClient)
         {
             var response = await RoomUtility.AddUsersToRoom(RoomId, userEmails, httpClient);
             UserInformations = response.Users;
+
+            InOutUser();
         }
 
         public async Task DeleteUsersAsync(List<string> userEmails, HttpClient httpClient)
         {
             var response = await RoomUtility.DeleteUserFromRoom(RoomId, userEmails, httpClient);
             UserInformations = response.Users;
+
+            InOutUser();
+        }
+
+        public async Task SendMessage(Message message, HubConnection hubConnection)
+        {
+            await hubConnection.SendAsync(SignalRMehod.SendMessage, message);
+
+            ChangePost();
+        }
+
+        public async Task DeleteMessage()
+        {
+            // TODO:
+
+            ChangePost();
         }
     }
 }

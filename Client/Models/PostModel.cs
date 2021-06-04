@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 
 namespace blazorTest.Client.Models
 {
+    public delegate void ChangePostMessage();
+
+    public delegate void ChangeThreadCountEventHandler();
+
     public class PostModel
     {
 
@@ -23,8 +27,18 @@ namespace blazorTest.Client.Models
 
         public DateTime CreateDate { get; set; }
 
+        public event ChangePostMessage ChangePost;
 
-        public async Task PostThreadMessage(ThreadMessage message, HttpClient httpClient)
+        public event ChangeThreadCountEventHandler ChangeThread;
+
+        public async Task ChangeMessage()
+        {
+            // TODO:
+
+            ChangePost();
+        }
+
+        public async Task SendThreadMessage(ThreadMessage message, HttpClient httpClient)
         {
             var response = await httpClient.PostAsJsonAsync("Post", message);
 
@@ -38,8 +52,19 @@ namespace blazorTest.Client.Models
                 MessageContext = threadMessage.MessageContext,
                 CreateDate = threadMessage.CreateDate
             });
+
+            ChangeThread();
         }
 
+        public async Task DeleteThreadMessage(Guid threadId, HttpClient httpClient)
+        {
+            await httpClient.DeleteAsync($"Thread/{threadId}");
+
+            var deletedThread = ThreadModels.FirstOrDefault(thread => thread.ThreadId == threadId);
+            ThreadModels.Remove(deletedThread);
+
+            ChangeThread();
+        }
 
     }
 }
