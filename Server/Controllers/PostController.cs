@@ -56,7 +56,7 @@ namespace blazorTest.Server.Controllers
             if (validationResult != null)
                 return validationResult;
 
-            var messages = await _postService.ReadPost(
+            var messages = await _postService.ReadPosts(
                 request.RoomId, request.NeedMessageTailDate);
 
             return Ok(messages);
@@ -65,36 +65,40 @@ namespace blazorTest.Server.Controllers
         /// <summary>
         /// 指定した投稿を削除します。
         /// </summary>
-        /// <param name="roomId">ルームID</param>
         /// <param name="postId">投稿ID</param>
         /// <returns></returns>
-        [HttpDelete("{roomId}/{postId}")]
-        public async Task<ActionResult> Delete(Guid roomId, Guid postId)
+        [HttpDelete("{postId}")]
+        public async Task<ActionResult> Delete(Guid postId)
         {
-            var validationResult = await ValidateParameter(roomId);
+            var post = await _postService.ReadPost(postId);
+            if (post == null)
+                return NotFound();
 
+            var validationResult = await ValidateParameter(post.RoomId);
             if (validationResult != null)
                 return validationResult;
 
-            return (await _postService.DeletePost(postId)) ? Ok() : NotFound();
+            return (await _postService.DeletePost(post)) ? Ok() : NotFound();
         }
 
         /// <summary>
         /// 指定した投稿を削除します。
         /// </summary>
-        /// <param name="roomId">ルームID</param>
         /// <param name="postId">投稿ID</param>
         /// <param name="request">更新内容</param>
         /// <returns></returns>
-        [HttpPut("{roomId}/{postId}")]
-        public async Task<ActionResult> Put(Guid roomId, Guid postId, ChatPostUpdateRequest request)
+        [HttpPut("{postId}")]
+        public async Task<ActionResult> Put(Guid postId, ChatPostUpdateRequest request)
         {
-            var validationResult = await ValidateParameter(roomId);
+            var post = await _postService.ReadPost(postId);
+            if (post == null)
+                return NotFound();
 
+            var validationResult = await ValidateParameter(post.RoomId);
             if (validationResult != null)
                 return validationResult;
 
-            return (await _postService.UpdatePost(postId, request.Text, DateTime.Now)) ? Ok() : NotFound();
+            return (await _postService.UpdatePost(post, request.Text, DateTime.Now)) ? Ok() : NotFound();
         }
 
         /// <summary>
