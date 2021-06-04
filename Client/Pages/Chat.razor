@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
 @using blazorTest.Client.Models;
+@using blazorTest.Client.ViewModel;
 @using blazorTest.Shared;
 @using blazorTest.Shared.Models;
 @using Oniqys.Blazor.ViewModel;
@@ -182,6 +183,8 @@
     }
 
     private List<Selectable<UserInformation>> Users { get; set; } = new();
+
+    private ChatViewModel ViewModel { get; set; } = new();
 
     [Parameter]
     public Guid RoomId
