@@ -21,7 +21,7 @@ namespace blazorTest.Client.Models
 
         public string HandleName { get; set; }
 
-        public Guid PostId { get; set; }
+        public Guid PostId { get; init; }
 
         public string MessageContext { get; set; }
 
@@ -31,9 +31,11 @@ namespace blazorTest.Client.Models
 
         public event ChangeThreadCountEventHandler ChangeThread;
 
-        public async Task ChangeMessage()
+        public async Task ChangeMessage(ChatPostUpdateRequest request, HttpClient httpClient)
         {
-            // TODO:
+            await httpClient.PutAsJsonAsync($"Post/{PostId}", request);
+
+            MessageContext = request.Text;
 
             ChangePost();
         }

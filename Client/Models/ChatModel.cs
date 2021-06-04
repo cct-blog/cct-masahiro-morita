@@ -20,7 +20,7 @@ namespace blazorTest.Client.Models
         public List<PostModel> PostModels { get; set; }
 
         // 入室中のユーザー情報
-        public List<UserInformation> UserInformations { get; set; }
+        public List<UserInformation> RoomParticipants { get; set; }
 
         // すべてのユーザー
         public List<UserInformation> AllUser { get; set; }
@@ -43,7 +43,7 @@ namespace blazorTest.Client.Models
 
             var roomDetail = await httpClient.GetFromJsonAsync<RoomDetail>($"Room/{RoomId}");
 
-            UserInformations = roomDetail.Users;
+            RoomParticipants = roomDetail.Users;
 
             var request = new ChatPostPostRequest()
             {
@@ -56,7 +56,7 @@ namespace blazorTest.Client.Models
 
             var postModelTask = await Task.WhenAll(messages.Select(async message =>
             {
-                var threadMessages = await httpClient.GetFromJsonAsync<IEnumerable<ThreadMessage>>($"Post/{message.Id}");
+                var threadMessages = await httpClient.GetFromJsonAsync<List<ThreadMessage>>($"Thread/Post/{message.Id}");
 
                 return new PostModel()
                 {
@@ -83,7 +83,7 @@ namespace blazorTest.Client.Models
         public async Task AddUsersAsync(List<string> userEmails, HttpClient httpClient)
         {
             var response = await RoomUtility.AddUsersToRoom(RoomId, userEmails, httpClient);
-            UserInformations = response.Users;
+            RoomParticipants = response.Users;
 
             InOutUser();
         }
@@ -91,7 +91,7 @@ namespace blazorTest.Client.Models
         public async Task DeleteUsersAsync(List<string> userEmails, HttpClient httpClient)
         {
             var response = await RoomUtility.DeleteUserFromRoom(RoomId, userEmails, httpClient);
-            UserInformations = response.Users;
+            RoomParticipants = response.Users;
 
             InOutUser();
         }
@@ -103,9 +103,13 @@ namespace blazorTest.Client.Models
             ChangePost();
         }
 
-        public async Task DeleteMessage()
+        public async Task DeleteMessage(Guid postId, HttpClient httpClient)
         {
-            // TODO:
+            await httpClient.DeleteAsync($"Post/{postId}");
+
+            var deletedMessage = PostModels.FirstOrDefault(postModel => postModel.PostId == postId);
+
+            PostModels.Remove(deletedMessage);
 
             ChangePost();
         }
