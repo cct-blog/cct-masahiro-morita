@@ -1,5 +1,4 @@
 ﻿using blazorTest.Server.Data;
-using blazorTest.Server.Exceptions;
 using blazorTest.Server.Hubs;
 using blazorTest.Shared;
 using blazorTest.Shared.Models;
@@ -70,6 +69,48 @@ namespace blazorTest.Server.Services
         }
 
         /// <summary>
+        /// ルーム内の投稿を削除します。
+        /// </summary>
+        /// <param name="postId">リームId</param>
+        /// <returns>成功したらtrue、存在しないPostの場合false</returns>
+        public async Task<bool> DeletePost(Guid postId)
+        {
+            var roomPost = await GetPostAsync(postId);
+
+            if (roomPost == null)
+                return false;
+
+            _context.Posts.Remove(roomPost);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        /// <summary>
+        /// ルーム内の投稿を更新します。
+        /// </summary>
+        /// <param name="postId">投稿Id</param>
+        /// <param name="text">更新するテキスト</param>
+        /// <param name="updated">更新する時刻</param>
+        /// <returns>成功したらtrue、存在しないPostの場合false</returns>
+        public async Task<bool> UpdatePost(Guid postId, string text, DateTime updated)
+        {
+            var roomPost = await GetPostAsync(postId);
+
+            if (roomPost == null)
+                return false;
+
+            roomPost.UpdateDate = updated;
+            roomPost.Text = text;
+
+            _context.Update(roomPost);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        /// <summary>
         /// メッセージからメンションを検索し、含まれる場合はメンションを送信します。
         /// </summary>
         /// <param name="message">メッセージ</param>
@@ -108,5 +149,18 @@ namespace blazorTest.Server.Services
         /// <returns></returns>
         public async Task SendMessage<T>(string signalRMethod, T content)
             => await _hubContext.Clients.All.SendAsync(signalRMethod, content);
+
+        /// <summary>
+        /// 投稿とユーザー情報を取得します。
+        /// </summary>
+        /// <param name="postId">投稿ID</param>
+        /// <returns></returns>
+        private async Task<Models.Post> GetPostAsync(Guid postId)
+        {
+            return await _context.Posts
+                .Include(post => post.ApplicationUser)
+                .FirstOrDefaultAsync(post => post.Id == postId);
+
+        }
     }
 }

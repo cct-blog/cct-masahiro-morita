@@ -1,13 +1,10 @@
-﻿using blazorTest.Server.Exceptions;
-using blazorTest.Server.Services;
-using blazorTest.Shared;
+﻿using blazorTest.Server.Services;
 using blazorTest.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace blazorTest.Server.Controllers
@@ -54,26 +51,73 @@ namespace blazorTest.Server.Controllers
         [HttpPost]
         public async Task<ActionResult<IEnumerable<Message>>> Post(ChatPostPostRequest request)
         {
+            var validationResult = await ValidateParameter(request.RoomId);
+
+            if (validationResult != null)
+                return validationResult;
+
+            var messages = await _postService.ReadPost(
+                request.RoomId, request.NeedMessageTailDate);
+
+            return Ok(messages);
+        }
+
+        /// <summary>
+        /// 指定した投稿を削除します。
+        /// </summary>
+        /// <param name="roomId">ルームID</param>
+        /// <param name="postId">投稿ID</param>
+        /// <returns></returns>
+        [HttpDelete("{roomId}/{postId}")]
+        public async Task<ActionResult> Delete(Guid roomId, Guid postId)
+        {
+            var validationResult = await ValidateParameter(roomId);
+
+            if (validationResult != null)
+                return validationResult;
+
+            return (await _postService.DeletePost(postId)) ? Ok() : NotFound();
+        }
+
+        /// <summary>
+        /// 指定した投稿を削除します。
+        /// </summary>
+        /// <param name="roomId">ルームID</param>
+        /// <param name="postId">投稿ID</param>
+        /// <param name="request">更新内容</param>
+        /// <returns></returns>
+        [HttpPut("{roomId}/{postId}")]
+        public async Task<ActionResult> Put(Guid roomId, Guid postId, ChatPostUpdateRequest request)
+        {
+            var validationResult = await ValidateParameter(roomId);
+
+            if (validationResult != null)
+                return validationResult;
+
+            return (await _postService.UpdatePost(postId, request.Text, DateTime.Now)) ? Ok() : NotFound();
+        }
+
+        /// <summary>
+        /// 指定されたルームが存在し、ユーザーがルームに所属しているかを判定します。
+        /// </summary>
+        private async Task<ActionResult> ValidateParameter(Guid roomId)
+        {
             var userEmail = User.Identity.Name;
 
             var user = await _userService.ReadUser(userEmail);
 
             if (user is null) return BadRequest("This user is deleted");
 
-            if (!await _userService.IsUserBelongedRoom(user.Id, request.RoomId))
+            if (!await _userService.IsUserBelongedRoom(user.Id, roomId))
             {
                 return BadRequest("User is not belonged to room");
             }
 
-            if (await _roomService.ReadRoom(request.RoomId) is null)
+            if (await _roomService.ReadRoom(roomId) is null)
             {
-                return BadRequest($"Room Id {request.RoomId} is not exsisted");
+                return BadRequest($"Room Id {roomId} is not exsisted");
             }
-
-            var messages = await _postService.ReadPost(
-                request.RoomId, request.NeedMessageTailDate);
-
-            return Ok(messages);
+            return null;
         }
     }
 }
