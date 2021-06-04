@@ -1,5 +1,4 @@
 ﻿using blazorTest.Server.Data;
-using blazorTest.Server.Exceptions;
 using blazorTest.Server.Hubs;
 using blazorTest.Shared;
 using blazorTest.Shared.Models;
@@ -44,7 +43,7 @@ namespace blazorTest.Server.Services
         /// <param name="tailDate">取得する投稿の末日時</param>
         /// <param name="MessageCount">取得するメッセージの数</param>
         /// <returns></returns>
-        public async Task<IEnumerable<Message>> ReadPost(
+        public async Task<IEnumerable<Message>> ReadPosts(
             Guid roomId, DateTime tailDate, int MessageCount = 50)
         {
             var roomPost = await _context.Posts
@@ -67,6 +66,51 @@ namespace blazorTest.Server.Services
                     HandleName = post.ApplicationUser.HandleName,
                     CreateDate = post.CreateDate
                 });
+        }
+
+        /// <summary>
+        /// 1件の投稿を取得します。
+        /// </summary>
+        /// <param name="postId">投稿ID</param>
+        /// <returns></returns>
+        public async Task<Models.Post> ReadPost(Guid postId) => await GetPostAsync(postId);
+
+        /// <summary>
+        /// ルーム内の投稿を削除します。
+        /// </summary>
+        /// <param name="post">削除する投稿</param>
+        /// <returns>成功したらtrue、存在しないPostの場合false</returns>
+        public async Task<bool> DeletePost(Models.Post post)
+        {
+            if (post == null)
+                return false;
+
+            _context.Posts.Remove(post);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        /// <summary>
+        /// ルーム内の投稿を更新します。
+        /// </summary>
+        /// <param name="post">投稿</param>
+        /// <param name="text">更新するテキスト</param>
+        /// <param name="updated">更新する時刻</param>
+        /// <returns>成功したらtrue、存在しないPostの場合false</returns>
+        public async Task<bool> UpdatePost(Models.Post post, string text, DateTime updated)
+        {
+            if (post == null)
+                return false;
+
+            post.UpdateDate = updated;
+            post.Text = text;
+
+            _context.Update(post);
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
         /// <summary>
@@ -108,5 +152,18 @@ namespace blazorTest.Server.Services
         /// <returns></returns>
         public async Task SendMessage<T>(string signalRMethod, T content)
             => await _hubContext.Clients.All.SendAsync(signalRMethod, content);
+
+        /// <summary>
+        /// 投稿とユーザー情報を取得します。
+        /// </summary>
+        /// <param name="postId">投稿ID</param>
+        /// <returns></returns>
+        private async Task<Models.Post> GetPostAsync(Guid postId)
+        {
+            return await _context.Posts
+                .Include(post => post.ApplicationUser)
+                .FirstOrDefaultAsync(post => post.Id == postId);
+
+        }
     }
 }
