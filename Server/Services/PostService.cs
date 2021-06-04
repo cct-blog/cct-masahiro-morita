@@ -69,7 +69,7 @@ namespace blazorTest.Server.Services
         }
 
         /// <summary>
-        /// 1軒の投稿を取得します。
+        /// 1件の投稿を取得します。
         /// </summary>
         /// <param name="postId">投稿ID</param>
         /// <returns></returns>
