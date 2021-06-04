@@ -82,7 +82,7 @@ namespace blazorTest.Server.Controllers
         }
 
         /// <summary>
-        /// 指定した投稿を削除します。
+        /// 指定した投稿を修正します。
         /// </summary>
         /// <param name="postId">投稿ID</param>
         /// <param name="request">更新内容</param>

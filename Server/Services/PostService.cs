@@ -39,7 +39,7 @@ namespace blazorTest.Server.Services
         /// <summary>
         /// ルーム内の投稿を取得します。
         /// </summary>
-        /// <param name="roomId">リームId</param>
+        /// <param name="roomId">ルームId</param>
         /// <param name="tailDate">取得する投稿の末日時</param>
         /// <param name="MessageCount">取得するメッセージの数</param>
         /// <returns></returns>
