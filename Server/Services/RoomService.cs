@@ -1,7 +1,5 @@
 ﻿using blazorTest.Server.Data;
-using blazorTest.Server.Exceptions;
 using blazorTest.Server.Models;
-using blazorTest.Shared;
 using blazorTest.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -81,7 +79,7 @@ namespace blazorTest.Server.Services
         /// </summary>
         /// <param name="room">Room</param>
         /// <returns></returns>
-        private RoomDetail CreateRoomDetail(Room room)
+        private static RoomDetail CreateRoomDetail(Room room)
         {
             if (room is null) return null;
 
