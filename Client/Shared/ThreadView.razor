@@ -1,6 +1,7 @@
 ﻿@using blazorTest.Client.ViewModel
 @using blazorTest.Shared.Models
 @using Oniqys.Blazor.Controls
+@using blazorTest.Client.Pages;
 @inherits ViewComponentBase<PostViewModel>
 
 @foreach (var thread in DataContext.Messages.Cast<ThreadMessage>())
@@ -9,7 +10,9 @@
         <PostItem Message="thread" />
     </div>
 }
-<MessageInput DataContext="DataContext" />
+<MessageInput DataContext="DataContext" Presenter="Presenter"/>
 
 @code {
+    [Parameter]
+    public Chat.IPresenter Presenter { get; set; }
 }

@@ -87,7 +87,7 @@ namespace blazorTest.Client.Models
             var response = await RoomUtility.AddUsersToRoom(RoomId, userEmails, httpClient);
             RoomParticipants = response.Users;
 
-            InOutUser();
+            InOutUser?.Invoke();
         }
 
         public async Task DeleteUsersAsync(List<string> userEmails, HttpClient httpClient)
@@ -95,14 +95,14 @@ namespace blazorTest.Client.Models
             var response = await RoomUtility.DeleteUserFromRoom(RoomId, userEmails, httpClient);
             RoomParticipants = response.Users;
 
-            InOutUser();
+            InOutUser?.Invoke();
         }
 
         public async Task SendMessage(Message message, HubConnection hubConnection)
         {
             await hubConnection.SendAsync(SignalRMehod.SendMessage, message);
 
-            ChangePost();
+            ChangePost?.Invoke();
         }
 
         public async Task DeleteMessage(Guid postId, HttpClient httpClient)
@@ -113,7 +113,7 @@ namespace blazorTest.Client.Models
 
             PostModels.Remove(deletedMessage);
 
-            ChangePost();
+            ChangePost?.Invoke();
         }
     }
 }

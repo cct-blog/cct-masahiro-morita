@@ -17,8 +17,8 @@ namespace blazorTest.Client.ViewModel
 
 
         private bool _threadOpened;
-        public bool ThreadOpend 
-        { 
+        public bool ThreadOpend
+        {
             get => _threadOpened;
             set => ValueChangeProcess(ref _threadOpened, value);
         }
@@ -44,6 +44,7 @@ namespace blazorTest.Client.ViewModel
                 {
                     await sender(InputText);
                     InputText = string.Empty;
+                    _presenter.Invalidate();
                 }),
             };
         }

@@ -1,15 +1,21 @@
 ﻿@using Oniqys.Blazor.Controls
 @using blazorTest.Client.ViewModel
+@using blazorTest.Client.Pages
 @inherits ViewComponentBase<PostViewModel>
 
 <div class="form-group margin-left input">
     <div class="row margin">
-        <textarea class="col margin inputbox" @bind="@DataContext.InputText" @onkeydown="OnKeyDown" id="messageInput" />
+        <textarea class="col margin inputbox" @bind=@DataContext.InputText @bind:event="oninput" @onkeydown=@OnKeyDown id="@TextAreaId" />
         <Button Class="col-md-auto margin btn btn-primary" Context="button_context" DataContext="DataContext.MessageSender">送信(Alt+Enter)</Button>
     </div>
 </div>
 
 @code {
+        [Parameter]
+        public Chat.IPresenter Presenter { get; set; }
+
+    public string TextAreaId { get; } = "textArea" + Guid.NewGuid().ToString();
+
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
         if (e.AltKey && (e.Code == "Enter" || e.Code == "NumpadEnter"))
@@ -18,6 +24,8 @@
                 return;
 
             await DataContext.MessageSender.Command.Execute();
+            DataContext.InputText = string.Empty;
+            await Presenter?.Focus(TextAreaId);
         }
     }
 }
