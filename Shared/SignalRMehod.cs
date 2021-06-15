@@ -9,5 +9,7 @@
         public const string SendMention = nameof(SendMention);
 
         public const string SendThreadMessage = nameof(SendThreadMessage);
+
+        public const string EnterOrLeaveUser = nameof(EnterOrLeaveUser);
     }
 }

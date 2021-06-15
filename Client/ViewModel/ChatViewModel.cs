@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using blazorTest.Client.Models;
 using blazorTest.Client.Pages;
@@ -11,21 +13,25 @@ namespace blazorTest.Client.ViewModel
     {
         private readonly ChatModel _model = new();
 
-        private readonly Guid _roomId;
+        private Guid _roomId;
 
+        public Guid RoomId
+        {
+            get => _roomId;
+            set => ValueChangeProcess(ref _roomId, value);
+        }
         private readonly Chat.IPresenter _presenter;
 
-        public UserListViewModel UserList { get; }
+        public UserListViewModel UserList { get; set; }
 
-        public ContentCollection<PostViewModel> Posts { get; } = new ContentCollection<PostViewModel>();
+        public ContentCollection<PostViewModel> ThreadPosters { get; } = new ContentCollection<PostViewModel>();
 
-        public Selectable UserListOpened { get; } = new() { IsSelected = false, IsEnabled = true };
+        public PostViewModel MessagePoster { get; }
 
 
-        public Clickable MessageSender { get; }
+        public Selectable UserListTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
-        private string _inputText;
-        public string InputText { get => _inputText; set => ObjectChangeProcess(ref _inputText, value); }
+        public Selectable ThreadTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
         public ChatViewModel(Chat.IPresenter presenter, Guid roomId)
         {
@@ -33,10 +39,18 @@ namespace blazorTest.Client.ViewModel
             _presenter = presenter;
             UserList = new(presenter, roomId);
 
-            MessageSender = new Clickable
-            {
-                Command = new Command(async () => await SendMessage())
-            };
+            MessagePoster = new(_presenter, SendMessage, null);
+
+            ThreadPosters.CollectionChanged += (s, e) => _presenter.Invalidate();
+            ThreadPosters.PropertyChanged += (s, e) => _presenter.Invalidate();
+        }
+
+        public async Task Refresh(Guid roomId)
+        {
+            _roomId = roomId;
+            UserList = new(_presenter, roomId);
+            ThreadPosters.Clear();
+            await UserList.OnInitializedAsync();
         }
 
         public async Task OnInitializedAsync()
@@ -44,7 +58,23 @@ namespace blazorTest.Client.ViewModel
             await UserList.OnInitializedAsync();
         }
 
-        private async Task SendMessage()
+        public void OnMessagePosted(Message message)
+        {
+            var thread = ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == message.Id);
+            if (thread != null)
+            {
+                thread.ParentMessage = message;
+            }
+            else
+            {
+                ThreadPosters.Add(new(_presenter, text => SendThreadMessage(message.Id, text), message));
+            }
+        }
+
+        /// <summary>
+        /// メッセージを投稿します。
+        /// </summary>
+        private async Task SendMessage(string text)
         {
             var user = await _presenter.GetUserAsync();
 
@@ -53,12 +83,31 @@ namespace blazorTest.Client.ViewModel
                 Id = Guid.Empty,
                 UserEmail = user.Id,
                 HandleName = user.Name,
-                MessageContext = InputText,
+                MessageContext = text,
                 RoomId = _roomId
             };
 
             await _model.SendMessage(message, _presenter.GetHabConnection());
-            InputText = string.Empty;
+        }
+
+        /// <summary>
+        /// スレッドのメッセージを投稿します。
+        /// </summary>
+        private async Task SendThreadMessage(Guid postId, string text)
+        {
+            var user = await _presenter.GetUserAsync();
+
+            var message = new ThreadMessage()
+            {
+                ThreadId = Guid.Empty,
+                PostId = postId,
+                UserEmail = user.Id,
+                HandleName = user.Name,
+                MessageContext = text,
+                RoomId = _roomId
+            };
+
+            await _presenter.GetHttpClient().PostAsJsonAsync("Thread", message);
         }
     }
 }

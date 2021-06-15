@@ -30,7 +30,7 @@
         overflow-y: auto;
     }
 
-    .userlist {
+    .righttab {
         grid-column: 2;
         grid-row: 1;
         overflow-y: auto;
@@ -63,38 +63,53 @@
 <div class="layout">
     <AuthorizeView>
         <Authorized>
-            <div class="userlist">
-                <RoomUserList DataContext="ViewModel.UserList" />
-                <div class="@IsCollapsed">
-                    @foreach (var thread in Threads)
+            <div class="righttab">
+                <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenUserList())">
+                    <span class="oi oi-chat" aria-hidden="true"></span>
+                </button>
+                @if (IsOpenedUserList)
+                {
+                    <RoomUserList DataContext="ViewModel.UserList" />
+                }
+                else if (CurrentThreadId != Guid.Empty && CurrentThread != null)
+                {
+                    @foreach (var thread in CurrentThread.Messages.Cast<ThreadMessage>())
                     {
                         <div id="@thread.ThreadId" class="margin">
                             <PostItem Message="@thread" />
                         </div>
                     }
-                    <div class="form-group margin-left input">
-                        <div class="row margin">
-                            <textarea class="col margin inputbox" value="@_threadMessageInput" @oninput="OnThreadInput" id="threadMessageInput" />
-                            <button class="col-md-auto margin btn btn-primary" id="threadSender" @onclick="SendThread">送信</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="content margin-left">
-                @foreach (var message in Messages)
-                {
-                    <div id="@message.Id" class="margin">
-                        <PostItem Message="@message" />
-                        <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenThread(message.Id))">Threadを開く</button>
-                    </div>
+                    <MessageInput DataContext="CurrentThread" />
                 }
             </div>
-            <div class="form-group margin-left input">
-                <div class="row margin">
-                    <textarea class="col margin inputbox" @bind="@ViewModel.InputText" @onkeydown="OnKeyDown" id="messageInput" />
-                    <Button Class="col-md-auto margin btn btn-primary" Context="button_context" DataContext="ViewModel.MessageSender">送信(Alt+Enter)</Button>
-                </div>
+            <div class="content margin-left">
+                @foreach (var poster in ViewModel.ThreadPosters)
+                {
+                    <div id="@poster.ParentMessage.Id" class="margin">
+                        <span>
+                            <PostItem Message="@poster.ParentMessage">
+                                <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenInnerThread(poster))">
+                                    <span class="oi oi-document" aria-hidden="true"></span>
+                                </button>
+                                <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenThread(poster.ParentMessage.Id))">
+                                    <span class="oi oi-arrow-right" aria-hidden="true"></span>
+                                </button>
+                            </PostItem>
+                        </span>
+                    </div>
+                    if (poster.ThreadOpend)
+                    {
+                        @foreach (var thread in poster.Messages.Cast<ThreadMessage>())
+                        {
+                            <div id="@thread.ThreadId" class="margin">
+                                <PostItem Message="@thread" />
+                            </div>
+                        }
+                        <MessageInput DataContext="poster" />
+                    }
+                }
             </div>
+            <MessageInput DataContext="ViewModel.MessagePoster" />
             <AnchorNavigation />
         </Authorized>
     </AuthorizeView>
@@ -120,6 +135,8 @@
         NavigationManager GetNavigationManager();
 
         HubConnection GetHabConnection();
+
+        void Invalidate();
     }
 
     public async Task<UserInfo> GetUserAsync()
@@ -135,7 +152,44 @@
 
     public HubConnection GetHabConnection() => _hubConnection;
 
+    public void Invalidate() => StateHasChanged();
+
     #endregion
+
+    private bool _isOpenedUserList;
+
+    private bool IsOpenedUserList
+    {
+        get => _isOpenedUserList;
+        set
+        {
+            if (_isOpenedUserList == value)
+                return;
+
+            _isOpenedUserList = value;
+            StateHasChanged();
+        }
+    }
+
+    private Guid _currentThreadId;
+
+    private Guid CurrentThreadId
+    {
+        get => _currentThreadId;
+        set
+        {
+            if (_currentThreadId == value)
+                return;
+
+            _currentThreadId = value;
+            _currentThread = ViewModel.ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == CurrentThreadId);
+            StateHasChanged();
+        }
+    }
+
+    private PostViewModel _currentThread;
+
+    private PostViewModel CurrentThread => _currentThread;
 
     private HubConnection _hubConnection;
 
@@ -155,61 +209,40 @@
 
     private Guid _roomId;
 
-    private bool collapseThreadtab = true;
-
-    private string IsCollapsed => collapseThreadtab ? "collapse" : null;
-
-    private string _threadMessageInput;
-
-    private Guid _threadPostId;
-
-    private List<ThreadMessage> Threads = new List<ThreadMessage>();
-
     private async Task OpenThread(Guid id)
     {
-        if (collapseThreadtab)
+        if (CurrentThreadId == id)
         {
-            _threadPostId = id;
-            collapseThreadtab = false;
-            Threads = await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + id.ToString());
-
+            CurrentThreadId = Guid.Empty;
             return;
-        }
-        else if (_threadPostId == id)
-        {
-            _threadPostId = Guid.Empty;
-            collapseThreadtab = true;
         }
         else
         {
-            _threadPostId = id;
-            Threads = await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + id.ToString());
-
+            CurrentThreadId = id;
+            await UpdateThread(CurrentThread);
         }
     }
 
-    private void OnThreadInput(ChangeEventArgs e)
+    private async Task UpdateThread(PostViewModel thread)
     {
-        _threadMessageInput = e.Value.ToString();
+        thread.Messages.Clear();
+        foreach (var message in await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + thread.ParentMessage.Id.ToString()))
+        {
+            thread.Messages.Add(message);
+        }
     }
 
-    private async Task SendThread()
+    private async Task OpenInnerThread(PostViewModel poster)
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        poster.ThreadOpend = !poster.ThreadOpend;
+        await UpdateThread(poster);
 
-        var message = new ThreadMessage()
-        {
-            ThreadId = Guid.Empty,
-            PostId = _threadPostId,
-            UserEmail = authState.User.Identity.Name,
-            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
-            MessageContext = _threadMessageInput,
-            RoomId = RoomId
-        };
+        StateHasChanged();
+    }
 
-        _threadMessageInput = string.Empty;
-
-        await HttpClient.PostAsJsonAsync("Thread", message);
+    private void OpenUserList()
+    {
+        IsOpenedUserList = !IsOpenedUserList;
     }
 
     private ChatViewModel ViewModel { get; set; }
@@ -224,10 +257,9 @@
                 return;
 
             _roomId = value;
-            // TODO : ここを綺麗にしたい
-            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
-            // TODO : ここは不味い。
-            //await ViewModel.OnInitializedAsync();
+            ViewModel ??= new ChatViewModel(this as IPresenter, _roomId);
+            ViewModel.ThreadPosters.Clear();
+            ViewModel.RoomId = _roomId;
             _fragment = null;
             Messages = new List<Message>();
         }
@@ -248,14 +280,31 @@
                 return;
 
             Messages.Add(message);
+            ViewModel.OnMessagePosted(message);
             StateHasChanged();
         });
 
         _hubConnection.On<ThreadMessage>(SignalRMehod.SendThreadMessage, (message) =>
         {
-            if (_threadPostId != message.PostId) return;
+            var thread = ViewModel.ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == message.PostId);
+            if(thread == null)
+                return;
 
-            Threads.Add(message);
+            var threadMessage = thread.Messages.Cast<ThreadMessage>().FirstOrDefault(each => each.ThreadId == message.ThreadId);
+            if (threadMessage == null)
+            {
+                thread.Messages.Add(message);
+            }
+            else
+            {
+                var index = thread.Messages.IndexOf(threadMessage);
+                if (index >= 0)
+                {
+                    thread.Messages.RemoveAt(index);
+                    thread.Messages.Insert(index, message);
+                }
+
+            }
             StateHasChanged();
         });
 
@@ -287,8 +336,10 @@
         var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
 
         var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
-
         Messages = await response.Content.ReadFromJsonAsync<List<Message>>();
+
+        foreach (var message in Messages)
+            ViewModel.OnMessagePosted(message);
     }
 
     /// <summary>
@@ -309,17 +360,6 @@
                 _fragment = url[1];
 
             NavigationManager.NavigateTo($"{url[0]}#{message.Id}", true);
-        }
-    }
-
-    private async Task OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.AltKey && (e.Code == "Enter" || e.Code == "NumpadEnter"))
-        {
-            if (string.IsNullOrWhiteSpace(ViewModel.InputText))
-                return;
-
-            await ViewModel.MessageSender.Command.Execute();
         }
     }
 

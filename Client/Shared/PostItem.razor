@@ -1,4 +1,8 @@
 ﻿@using blazorTest.Shared.Models;
+@using blazorTest.Client.ViewModel;
+@using Oniqys.Blazor.Controls;
+@inherits ViewComponentBase<PostViewModel>
+
 @if (Message != null)
 {
     <style type="text/css">
@@ -12,8 +16,9 @@
         <small class="text-white-50"> (@Message.CreateDate.)</small>
         @if (Message.CreateDate != Message.UpdateDate)
         {
-
+            <small class="text-white-50"> 更新日時 @Message.UpdateDate</small>
         }
+        @ChildContent
         <div class="rounded border border-dark bg-dark text-white">
             @foreach (var line in Message.MessageContext.Split("\n") ?? Enumerable.Empty<string>())
             {
@@ -22,6 +27,7 @@
                 </div>
             }
         </div>
+
     </div>
 }
 
@@ -29,4 +35,6 @@
     [Parameter]
     public MessageBase Message { get; set; }
 
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
 }
