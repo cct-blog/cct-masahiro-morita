@@ -1,6 +1,7 @@
 ﻿@using blazorTest.Shared.Models
 @using Oniqys.Blazor.ViewModel
 @using Oniqys.Blazor.Controls
+@inherits ViewComponentBase<ContentCollection<Selectable<UserInformation>>>
 
 <ListView Items="@Users">
     <ItemTemplate Context="selectableUser">
@@ -16,6 +17,5 @@
     /// <summary>
     /// 一覧するユーザー
     /// </summary>
-    [Parameter]
-    public ContentCollection<Selectable<UserInformation>> Users { get; set; }
+    private ContentCollection<Selectable<UserInformation>> Users => DataContext;
 }

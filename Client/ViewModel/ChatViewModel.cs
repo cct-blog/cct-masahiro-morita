@@ -1,9 +1,9 @@
-﻿using blazorTest.Client.Models;
+﻿using System;
+using System.Threading.Tasks;
+using blazorTest.Client.Models;
 using blazorTest.Client.Pages;
 using blazorTest.Shared.Models;
 using Oniqys.Blazor.ViewModel;
-using System;
-using System.Threading.Tasks;
 
 namespace blazorTest.Client.ViewModel
 {
@@ -15,10 +15,7 @@ namespace blazorTest.Client.ViewModel
 
         private readonly Chat.IPresenter _presenter;
 
-        /// <summary>
-        /// 全ユーザーと（入室中情報付き）
-        /// </summary>
-        public ContentCollection<Selectable<UserInformation>> Users { get; set; } = new();
+        public UserListViewModel UserList { get; }
 
         public ContentCollection<PostViewModel> Posts { get; } = new ContentCollection<PostViewModel>();
 
@@ -34,11 +31,17 @@ namespace blazorTest.Client.ViewModel
         {
             _roomId = roomId;
             _presenter = presenter;
+            UserList = new(presenter, roomId);
 
             MessageSender = new Clickable
             {
                 Command = new Command(async () => await SendMessage())
             };
+        }
+
+        public async Task OnInitializedAsync()
+        {
+            await UserList.OnInitializedAsync();
         }
 
         private async Task SendMessage()

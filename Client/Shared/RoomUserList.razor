@@ -1,0 +1,15 @@
+﻿@using blazorTest.Client.ViewModel;
+@using Oniqys.Blazor.Controls;
+@inherits ViewComponentBase<UserListViewModel>
+
+
+<div class="userlist">
+    <div class="header">
+        <button class="col-md-auto margin btn btn-info" @onclick="DataContext.AddUsers">反映</button>
+        <button class="col-md-auto margin btn btn-danger" @onclick="DataContext.LeaveRoom">退室</button>
+    </div>
+    <div style="margin-top: 10px;">
+        <UserSelector DataContext="DataContext.Users" />
+    </div>
+</div>
+

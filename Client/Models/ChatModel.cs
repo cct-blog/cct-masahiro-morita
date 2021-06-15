@@ -65,6 +65,7 @@ namespace blazorTest.Client.Models
                     PostId = message.Id,
                     MessageContext = message.MessageContext,
                     CreateDate = message.CreateDate,
+                    UpdateDate = message.UpdateDate,
                     ThreadModels = threadMessages
                         .Select(threadMessage => new ThreadModel()
                         {
@@ -72,7 +73,8 @@ namespace blazorTest.Client.Models
                             HandleName = threadMessage.HandleName,
                             ThreadId = threadMessage.ThreadId,
                             MessageContext = threadMessage.MessageContext,
-                            CreateDate = threadMessage.CreateDate
+                            CreateDate = threadMessage.CreateDate,
+                            UpdateDate = threadMessage.UpdateDate
                         }).ToList()
                 };
             }));

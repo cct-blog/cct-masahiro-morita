@@ -12,7 +12,7 @@ namespace blazorTest.Client.Models
 
     public delegate void ChangeThreadCountEventHandler();
 
-    public class PostModel
+    public class PostModel : ICreateAndUpdateDate
     {
 
         public List<ThreadModel> ThreadModels { get; set; }
@@ -26,6 +26,8 @@ namespace blazorTest.Client.Models
         public string MessageContext { get; set; }
 
         public DateTime CreateDate { get; set; }
+
+        public DateTime UpdateDate { get; set; }
 
         public event ChangePostMessage ChangePost;
 

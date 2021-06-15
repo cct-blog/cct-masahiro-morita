@@ -64,18 +64,12 @@
     <AuthorizeView>
         <Authorized>
             <div class="userlist">
-                <div class="header">
-                    <button class="col-md-auto margin btn btn-info" @onclick="AddUsers">反映</button>
-                    <button class="col-md-auto margin btn btn-danger" @onclick="LeaveRoom">退室</button>
-                </div>
-                <div style="margin-top: 10px;">
-                    <UserSelector Users="@ViewModel.Users" />
-                </div>
+                <RoomUserList DataContext="ViewModel.UserList" />
                 <div class="@IsCollapsed">
                     @foreach (var thread in Threads)
                     {
                         <div id="@thread.ThreadId" class="margin">
-                            <PostItem Name="@thread.HandleName" Message="@thread.MessageContext" CreateDate="@thread.CreateDate" />
+                            <PostItem Message="@thread" />
                         </div>
                     }
                     <div class="form-group margin-left input">
@@ -90,7 +84,7 @@
                 @foreach (var message in Messages)
                 {
                     <div id="@message.Id" class="margin">
-                        <PostItem Name="@message.HandleName" Message="@message.MessageContext" CreateDate="@message.CreateDate" />
+                        <PostItem Message="@message" />
                         <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenThread(message.Id))">Threadを開く</button>
                     </div>
                 }
@@ -115,6 +109,8 @@
         public string Name { get; init; }
     }
 
+    #region Chat.IPresenter
+
     public interface IPresenter
     {
         Task<UserInfo> GetUserAsync();
@@ -133,12 +129,13 @@
         return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
     }
 
-
     public HttpClient GetHttpClient() => HttpClient;
 
     public NavigationManager GetNavigationManager() => NavigationManager;
 
     public HubConnection GetHabConnection() => _hubConnection;
+
+    #endregion
 
     private HubConnection _hubConnection;
 
@@ -227,8 +224,10 @@
                 return;
 
             _roomId = value;
-            // TODO  :  ここを綺麗にしたい
+            // TODO : ここを綺麗にしたい
             ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+            // TODO : ここは不味い。
+            //await ViewModel.OnInitializedAsync();
             _fragment = null;
             Messages = new List<Message>();
         }
@@ -239,6 +238,7 @@
     protected override async Task OnInitializedAsync()
     {
         ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+        await ViewModel.OnInitializedAsync();
 
         _hubConnection = HubUtility.CreateHubConnection();
 
@@ -259,8 +259,6 @@
             StateHasChanged();
         });
 
-        await UpdateUsers();
-
         await _hubConnection.StartAsync();
     }
 
@@ -278,26 +276,6 @@
 
         NavigateToLast();
         //await Focus("messageInput");
-    }
-
-    private async Task UpdateUsers()
-    {
-        var roomDetail = await HttpClient.GetFromJsonAsync<RoomDetail>($"room/{_roomId}");
-
-        var localUsers = roomDetail.Users.Select(each => each.Email).ToHashSet();
-
-        var allUsers = await HttpClient.GetFromJsonAsync<List<UserInformation>>($"user");
-
-
-        ViewModel.Users.Clear();
-        foreach (var user in allUsers.Select(each =>
-        {
-            var exist = localUsers.Contains(each.Email);
-            return new Selectable<UserInformation> { IsSelected = exist, IsEnabled = !exist, Content = each };
-        }))
-        {
-            ViewModel.Users.Add(user);
-        }
     }
 
     /// <summary>
@@ -348,22 +326,6 @@
     public async Task Focus(string elementId)
     {
         await JSRuntime.InvokeVoidAsync("focusElement", elementId);
-    }
-
-    private async Task LeaveRoom()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-
-        await RoomUtility.DeleteUserFromRoom(RoomId, authState.User.Identity.Name, HttpClient);
-
-        NavigationManager.NavigateTo("/");
-    }
-
-    private async Task AddUsers()
-    {
-        await RoomUtility.AddUsersToRoom(RoomId, ViewModel.Users.Where(each => each.IsEnabled && each.IsSelected).Select(each => each.Content.Email).ToList(), HttpClient);
-
-        await UpdateUsers();
     }
 
     public void Dispose()

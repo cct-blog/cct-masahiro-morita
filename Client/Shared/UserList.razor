@@ -2,6 +2,7 @@
 @using Oniqys.Blazor.Controls
 @using Oniqys.Blazor.ViewModel
 @using blazorTest.Client.Shared
+@inherits ViewComponentBase<ContentCollection<UserInformation>>
 
 <ListView Items="@Users">
     <ItemTemplate Context="user">
@@ -13,6 +14,5 @@
     /// <summary>
     /// 一覧するユーザー
     /// </summary>
-    [Parameter]
-    public List<UserInformation> Users { get; set; } = new();
+    public ContentCollection<UserInformation> Users => DataContext;
 }

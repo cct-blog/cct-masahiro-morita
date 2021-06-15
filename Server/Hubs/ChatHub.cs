@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace blazorTest.Server.Hubs
@@ -76,7 +75,8 @@ namespace blazorTest.Server.Hubs
                     MessageContext = updatedPost.Text,
                     RoomId = updatedPost.RoomId,
                     UserEmail = user.Email,
-                    CreateDate = updatedPost.CreateDate
+                    CreateDate = updatedPost.CreateDate,
+                    UpdateDate = updatedPost.UpdateDate,
                 });
         }
     }

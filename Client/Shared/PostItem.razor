@@ -1,30 +1,32 @@
-﻿<style type="text/css">
-    .message {
-        text-indent: 1em;
-    }
-</style>
-
-<div>
-    <small class="text-white-50">@Name</small>
-    <small class="text-white-50"> (@CreateDate.)</small>
-    <div class="rounded border border-dark bg-dark text-white">
-        @foreach (var line in Message?.Split("\n") ?? Enumerable.Empty<string>())
-        {
-            <div class="message text-white">
-                <span>@line</span>
-            </div>
+﻿@using blazorTest.Shared.Models;
+@if (Message != null)
+{
+    <style type="text/css">
+        .message {
+            text-indent: 1em;
         }
+    </style>
+
+    <div>
+        <small class="text-white-50">@Message.HandleName</small>
+        <small class="text-white-50"> (@Message.CreateDate.)</small>
+        @if (Message.CreateDate != Message.UpdateDate)
+        {
+
+        }
+        <div class="rounded border border-dark bg-dark text-white">
+            @foreach (var line in Message.MessageContext.Split("\n") ?? Enumerable.Empty<string>())
+            {
+                <div class="message text-white">
+                    <span>@line</span>
+                </div>
+            }
+        </div>
     </div>
-</div>
+}
 
 @code {
     [Parameter]
-    public string Name { get; set; }
-
-    [Parameter]
-    public string Message { get; set; }
-
-    [Parameter]
-    public DateTime CreateDate { get; set; }
+    public MessageBase Message { get; set; }
 
 }
