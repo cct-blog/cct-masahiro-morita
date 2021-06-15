@@ -64,7 +64,8 @@ namespace blazorTest.Server.Services
                     RoomId = roomId,
                     MessageContext = post.Text,
                     HandleName = post.ApplicationUser.HandleName,
-                    CreateDate = post.CreateDate
+                    CreateDate = post.CreateDate,
+                    UpdateDate = post.UpdateDate,
                 });
         }
 
