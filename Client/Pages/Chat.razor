@@ -65,16 +65,19 @@
     <AuthorizeView>
         <Authorized>
             <div class="righttab">
-                <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenUserList())">
+                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenUserList())">
                     <span class="oi oi-chat" aria-hidden="true"></span>
                 </button>
                 @if (IsOpenedUserList)
                 {
                     <RoomUserList DataContext="ViewModel.UserList" />
                 }
-                else if (CurrentThreadId != Guid.Empty && CurrentThread != null)
+                else if (CurrentThreadId != Guid.Empty && _currentThread != null)
                 {
-                    <ThreadView DataContext="CurrentThread" Presenter="this" />
+                    <div class="margin">
+                        <PostItem Message="@_currentThread.ParentMessage" />
+                    </div>
+                    <ThreadView DataContext="_currentThread" />
                 }
             </div>
             <div class="content margin-left">
@@ -83,10 +86,10 @@
                     <div id="@poster.ParentMessage.Id" class="margin">
                         <span>
                             <PostItem Message="@poster.ParentMessage">
-                                <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenInnerThread(poster))">
+                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenInnerThread(poster))">
                                     <span class="oi oi-document" aria-hidden="true"></span>
                                 </button>
-                                <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenThread(poster.ParentMessage.Id))">
+                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenThread(poster.ParentMessage.Id))">
                                     <span class="oi oi-arrow-right" aria-hidden="true"></span>
                                 </button>
                             </PostItem>
@@ -94,11 +97,11 @@
                     </div>
                     if (poster.ThreadOpend)
                     {
-                        <ThreadView DataContext="poster" Presenter="this" />
+                        <ThreadView DataContext="poster" />
                     }
                 }
             </div>
-            <MessageInput DataContext="ViewModel.MessagePoster" Presenter="this" />
+            <MessageInput DataContext="ViewModel.MessagePoster" />
             <AnchorNavigation />
         </Authorized>
     </AuthorizeView>
@@ -129,7 +132,7 @@
 
         void NavigateToLast();
 
-        Task Focus(string elementId);
+        void SetFocus(string elementId);
     }
 
     public async Task<UserInfo> GetUserAsync()
@@ -147,7 +150,11 @@
 
     public void Invalidate() => StateHasChanged();
 
+    public void SetFocus(string elementId) => _nextFocusElementId = elementId;
+
     #endregion
+
+    private string _nextFocusElementId;
 
     private bool _isOpenedUserList;
 
@@ -184,21 +191,7 @@
 
     private PostViewModel _currentThread;
 
-    private PostViewModel CurrentThread => _currentThread;
-
     private HubConnection _hubConnection;
-
-    List<Message> _messages = new List<Message>();
-
-    private List<Message> Messages
-    {
-        get => _messages;
-        set
-        {
-            _messages = value;
-            StateHasChanged();
-        }
-    }
 
     private string _fragment;
 
@@ -214,7 +207,7 @@
         else
         {
             CurrentThreadId = id;
-            await UpdateThread(CurrentThread);
+            await UpdateThread(_currentThread);
         }
     }
 
@@ -273,7 +266,6 @@
             if (message.RoomId != _roomId)
                 return;
 
-            Messages.Add(message);
             ViewModel.OnMessagePosted(message);
             StateHasChanged();
         });
@@ -318,7 +310,11 @@
         await base.OnAfterRenderAsync(firstRender);
 
         NavigateToLast();
-        //await Focus("messageInput");
+        if (!string.IsNullOrEmpty(_nextFocusElementId))
+        {
+            await Focus(_nextFocusElementId);
+            _nextFocusElementId = null;
+        }
     }
 
     /// <summary>
@@ -330,9 +326,9 @@
         var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
 
         var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
-        Messages = await response.Content.ReadFromJsonAsync<List<Message>>();
+        var messages = await response.Content.ReadFromJsonAsync<List<Message>>();
 
-        foreach (var message in Messages)
+        foreach (var message in messages)
             ViewModel.OnMessagePosted(message);
     }
 
@@ -341,11 +337,11 @@
     /// </summary>
     public void NavigateToLast()
     {
-        var count = Messages.Count;
+        var count = ViewModel.ThreadPosters.Count;
         if (count == 0)
             return;
 
-        var message = Messages[count - 1];
+        var message = ViewModel.ThreadPosters[count - 1].ParentMessage;
 
         var url = NavigationManager.Uri.Split("#");
         if (url.Length == 1 || url.Length >= 2 && Guid.TryParse(url[1], out var lastMessageId) && lastMessageId != message.Id)

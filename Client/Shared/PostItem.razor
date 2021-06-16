@@ -15,14 +15,14 @@
 
     <div>
         <small class="text-white-50">@Message.HandleName</small>
-        <small class="text-white-50"> (@Message.CreateDate.)</small>
+        <small class="text-white-50"> (@Message.CreateDate)</small>
         @if (Message.CreateDate != Message.UpdateDate)
         {
             <small class="text-white-50"> 更新日時 @Message.UpdateDate</small>
         }
         @if (CanEdit)
         {
-            <button class="col-md-auto margin btn btn-primary btn-sm" id="openThread" @onclick="(() => OpenEditor())">
+            <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenEditor())">
                 <span class="oi oi-tablet" aria-hidden="true"></span>
             </button>
         }

@@ -4,15 +4,14 @@
 @using blazorTest.Client.Pages;
 @inherits ViewComponentBase<PostViewModel>
 
-@foreach (var thread in DataContext.Messages.Cast<ThreadMessage>())
-{
-    <div id="@thread.ThreadId" class="margin">
-        <PostItem Message="thread" />
-    </div>
-}
-<MessageInput DataContext="DataContext" Presenter="Presenter"/>
 
-@code {
-    [Parameter]
-    public Chat.IPresenter Presenter { get; set; }
-}
+
+<div class="rounded border border-dark">
+    @foreach (var thread in DataContext.Messages.Cast<ThreadMessage>())
+    {
+        <div id="@thread.ThreadId" class="margin">
+            <PostItem Message="thread" />
+        </div>
+    }
+    <MessageInput DataContext="DataContext" />
+</div>

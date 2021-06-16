@@ -15,6 +15,8 @@ namespace blazorTest.Client.ViewModel
         private Message _parentMessage;
         public Message ParentMessage { get => _parentMessage; set => ObjectChangeProcess(ref _parentMessage, value); }
 
+        public string TextAreaId => ParentMessage?.Id.ToString() ?? "messageInput";
+
 
         private bool _threadOpened;
         public bool ThreadOpend
@@ -42,9 +44,10 @@ namespace blazorTest.Client.ViewModel
             {
                 Command = new Command(async () =>
                 {
-                    await sender(InputText);
+                    var text = InputText;
                     InputText = string.Empty;
-                    _presenter.Invalidate();
+                    _presenter.SetFocus(TextAreaId);
+                    await sender(text);
                 }),
             };
         }
