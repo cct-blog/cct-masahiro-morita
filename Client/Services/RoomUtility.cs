@@ -39,8 +39,8 @@ namespace blazorTest.Client.Services
         /// <param name="roomId">ユーザーを削除するルームのID</param>
         /// <param name="userEmails">ルームから削除するユーザーのEmailのリスト</param>
         /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
-        /// <returns></returns>
-        public static async Task DeleteUserFromRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
+        /// <returns>削除後のルームの詳細</returns>
+        public static async Task<RoomDetail> DeleteUserFromRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
         {
             var urlBuilder = new System.Text.StringBuilder();
             urlBuilder.Append("Room/");
@@ -68,6 +68,8 @@ namespace blazorTest.Client.Services
             {
                 await httpClient.DeleteAsync(urlBuilder.ToString());
             }
+
+            return responseContent;
         }
 
         /// <summary>
@@ -76,8 +78,8 @@ namespace blazorTest.Client.Services
         /// <param name="roomId">ルームのID</param>
         /// <param name="userEmails">ルームに追加するユーザーのEmailのリスト</param>
         /// <param name="httpClient">razorで注入したHttpClientインスタンス</param>
-        /// <returns></returns>
-        public static async Task AddUsersToRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
+        /// <returns><追加後のルームの詳細/returns>
+        public static async Task<RoomDetail> AddUsersToRoom(Guid roomId, List<string> userEmails, HttpClient httpClient)
         {
             var urlBuilder = new System.Text.StringBuilder();
             urlBuilder.Append("Room/");
@@ -86,7 +88,9 @@ namespace blazorTest.Client.Services
             var urlParts = urlBuilder.ToString();
 
             var url = new System.Text.StringBuilder(urlParts);
-            await httpClient.PostAsync(url.ToString(), JsonContent.Create(userEmails));
+            var response = await httpClient.PostAsync(url.ToString(), JsonContent.Create(userEmails));
+
+            return await response.Content.ReadFromJsonAsync<RoomDetail>();
         }
 
         /// <summary>

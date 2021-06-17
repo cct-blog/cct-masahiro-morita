@@ -1,6 +1,6 @@
 {
-  "name": "blazorTest",
-  "short_name": "blazorTest",
+  "name": "Realtime Chat",
+  "short_name": "Realtime Chat",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

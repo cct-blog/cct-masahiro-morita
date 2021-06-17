@@ -1,13 +1,11 @@
-﻿using blazorTest.Server.Data;
-using blazorTest.Shared.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using blazorTest.Server.Data;
+using blazorTest.Shared.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace blazorTest.Server.Services
 {
@@ -42,6 +40,7 @@ namespace blazorTest.Server.Services
                     UserEmail = thread.ApplicationUser.Email,
                     RoomId = thread.Post.RoomId,
                     CreateDate = thread.CreateDate,
+                    UpdateDate = thread.UpdateDate,
                     MessageContext = thread.Text
                 };
         }
@@ -75,7 +74,8 @@ namespace blazorTest.Server.Services
                     MessageContext = t.Text,
                     HandleName = t.ApplicationUser.HandleName,
                     UserEmail = t.ApplicationUser.Email,
-                    CreateDate = t.CreateDate
+                    CreateDate = t.CreateDate,
+                    UpdateDate = t.UpdateDate,
                 })
                 .ToArrayAsync();
 

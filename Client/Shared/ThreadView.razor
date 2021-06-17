@@ -1,0 +1,17 @@
+﻿@using blazorTest.Client.ViewModel
+@using blazorTest.Shared.Models
+@using Oniqys.Blazor.Controls
+@using blazorTest.Client.Pages;
+@inherits ViewComponentBase<PostViewModel>
+
+
+
+<div class="rounded border border-dark">
+    @foreach (var thread in DataContext.Messages.Cast<ThreadMessage>())
+    {
+        <div id="@thread.ThreadId" class="margin">
+            <PostItem Message="thread" />
+        </div>
+    }
+    <MessageInput DataContext="DataContext" />
+</div>

@@ -1,6 +1,7 @@
 ﻿using blazorTest.Shared.Models;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 
 namespace blazorTest.Client.Services
 {
@@ -15,6 +16,8 @@ namespace blazorTest.Client.Services
     public class RoomManager : IRoomManager
     {
         public event EventHandler<List<UserRoom>> RoomChanged;
+
+        public HttpClient _httpClient;
 
         public void RaiseRoomChanged(object sender, List<UserRoom> rooms)
         {
