@@ -1,7 +1,7 @@
-﻿using blazorTest.Server.Data;
-using blazorTest.Server.Hubs;
-using blazorTest.Shared;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Data;
+using ChatApp.Server.Hubs;
+using ChatApp.Shared;
+using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Services
+namespace ChatApp.Server.Services
 {
     public class PostService
     {

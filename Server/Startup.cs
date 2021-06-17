@@ -1,8 +1,8 @@
-using blazorTest.Server.Data;
-using blazorTest.Server.Exceptions;
-using blazorTest.Server.Hubs;
-using blazorTest.Server.Models;
-using blazorTest.Server.Services;
+using ChatApp.Server.Data;
+using ChatApp.Server.Exceptions;
+using ChatApp.Server.Hubs;
+using ChatApp.Server.Models;
+using ChatApp.Server.Services;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,7 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace blazorTest.Server
+namespace ChatApp.Server
 {
     public class Startup
     {

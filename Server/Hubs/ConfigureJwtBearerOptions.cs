@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Hubs
+namespace ChatApp.Server.Hubs
 {
     public class ConfigureJwtBearerOptions : IPostConfigureOptions<JwtBearerOptions>
     {

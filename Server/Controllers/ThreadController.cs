@@ -1,8 +1,8 @@
-﻿using blazorTest.Server.Helper;
-using blazorTest.Server.Hubs;
-using blazorTest.Server.Services;
-using blazorTest.Shared;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Helper;
+using ChatApp.Server.Hubs;
+using ChatApp.Server.Services;
+using ChatApp.Shared;
+using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Controllers
+namespace ChatApp.Server.Controllers
 {
     /// <summary>
     /// スレッドに関するAPIを提供するクラス

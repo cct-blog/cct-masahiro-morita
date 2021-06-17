@@ -1,9 +1,9 @@
-﻿using blazorTest.Server.Exceptions;
+﻿using ChatApp.Server.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Helper
+namespace ChatApp.Server.Helper
 {
     public static class ExceptionHelper
     {

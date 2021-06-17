@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace blazorTest.Shared.Models
+namespace ChatApp.Shared.Models
 {
     public record MessageBase : IReadonlyCreateAndUpdateDate
 

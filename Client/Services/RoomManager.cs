@@ -1,9 +1,9 @@
-﻿using blazorTest.Shared.Models;
+﻿using ChatApp.Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
-namespace blazorTest.Client.Services
+namespace ChatApp.Client.Services
 {
     public interface IRoomManager
     {

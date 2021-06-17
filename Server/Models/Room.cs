@@ -1,9 +1,9 @@
-﻿using blazorTest.Shared.Models;
+﻿using ChatApp.Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace blazorTest.Server.Models
+namespace ChatApp.Server.Models
 {
     public class Room : ICreateAndUpdateDate
     {

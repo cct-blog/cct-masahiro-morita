@@ -1,15 +1,15 @@
-﻿using blazorTest.Server.Data;
-using blazorTest.Server.Models;
-using blazorTest.Server.Services;
-using blazorTest.Shared;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Data;
+using ChatApp.Server.Models;
+using ChatApp.Server.Services;
+using ChatApp.Shared;
+using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Hubs
+namespace ChatApp.Server.Hubs
 {
     public class ChatHub : Hub
     {

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using blazorTest.Client.Pages;
-using blazorTest.Shared.Models;
+using ChatApp.Client.Pages;
+using ChatApp.Shared.Models;
 using Oniqys.Blazor.ViewModel;
 
-namespace blazorTest.Client.ViewModel
+namespace ChatApp.Client.ViewModel
 {
     public class PostViewModel : ContentBase
     {

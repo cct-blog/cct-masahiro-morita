@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Client.Services
+namespace ChatApp.Client.Services
 {
     public class HubUtility
     {

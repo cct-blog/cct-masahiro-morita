@@ -1,7 +1,7 @@
-﻿using blazorTest.Shared;
+﻿using ChatApp.Shared;
 using System;
 
-namespace blazorTest.Server.Exceptions
+namespace ChatApp.Server.Exceptions
 {
     internal class HttpResponseException : Exception
     {

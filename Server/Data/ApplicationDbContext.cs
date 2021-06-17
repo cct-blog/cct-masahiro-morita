@@ -1,5 +1,5 @@
-﻿using blazorTest.Server.Models;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Models;
+using ChatApp.Shared.Models;
 using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Data
+namespace ChatApp.Server.Data
 {
     public class ApplicationDbContext : ApiAuthorizationDbContext<ApplicationUser>
     {

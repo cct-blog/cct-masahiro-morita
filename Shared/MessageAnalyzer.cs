@@ -1,4 +1,4 @@
-﻿using blazorTest.Shared.Models;
+﻿using ChatApp.Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace blazorTest.Shared
+namespace ChatApp.Shared
 {
     public static class MessageAnalyzer
     {

@@ -1,5 +1,5 @@
-﻿using blazorTest.Server.Services;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Services;
+using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Controllers
+namespace ChatApp.Server.Controllers
 {
     /// <summary>
     /// ユーザーに関するAPIを提供するクラス

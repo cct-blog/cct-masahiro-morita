@@ -2,12 +2,12 @@
 using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using blazorTest.Client.Models;
-using blazorTest.Client.Pages;
-using blazorTest.Shared.Models;
+using ChatApp.Client.Models;
+using ChatApp.Client.Pages;
+using ChatApp.Shared.Models;
 using Oniqys.Blazor.ViewModel;
 
-namespace blazorTest.Client.ViewModel
+namespace ChatApp.Client.ViewModel
 {
     public class ChatViewModel : ContentBase
     {

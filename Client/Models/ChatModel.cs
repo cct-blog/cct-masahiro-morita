@@ -1,6 +1,6 @@
-﻿using blazorTest.Client.Services;
-using blazorTest.Shared;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Client.Services;
+using ChatApp.Shared;
+using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace blazorTest.Client.Models
+namespace ChatApp.Client.Models
 {
     public delegate void InOutUserEventHandler();
 

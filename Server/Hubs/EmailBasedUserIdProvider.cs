@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Hubs
+namespace ChatApp.Server.Hubs
 {
     public class EmailBasedUserIdProvider : IUserIdProvider
     {

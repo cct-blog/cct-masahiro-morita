@@ -1,10 +1,10 @@
-﻿using blazorTest.Shared.Models;
+﻿using ChatApp.Shared.Models;
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace blazorTest.Client.Models
+namespace ChatApp.Client.Models
 {
 
     public delegate void ChangeThreadMessageEventHandler();

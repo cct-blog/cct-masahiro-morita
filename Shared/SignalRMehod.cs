@@ -1,4 +1,4 @@
-﻿namespace blazorTest.Shared
+﻿namespace ChatApp.Shared
 {
     public static class SignalRMehod
     {

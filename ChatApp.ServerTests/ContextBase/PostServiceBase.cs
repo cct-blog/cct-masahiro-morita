@@ -1,5 +1,5 @@
-﻿using blazorTest.Server.Data;
-using blazorTest.Server.Models;
+﻿using ChatApp.Server.Data;
+using ChatApp.Server.Models;
 using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -13,7 +13,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 
-namespace blazorTest.ServerTests.ContextBase
+namespace ChatApp.ServerTests.ContextBase
 {
     public class PostServiceBase : IDisposable
     {

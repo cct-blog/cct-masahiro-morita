@@ -1,16 +1,16 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using blazorTest.Server.Services;
+using ChatApp.Server.Services;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework.Internal;
 using NUnit.Framework;
-using blazorTest.ServerTests.ContextBase;
+using ChatApp.ServerTests.ContextBase;
 using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Services.Tests
+namespace ChatApp.Server.Services.Tests
 {
     [TestClass()]
     public class PostServiceTests

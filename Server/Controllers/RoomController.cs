@@ -1,6 +1,6 @@
-﻿using blazorTest.Server.Helper;
-using blazorTest.Server.Services;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Helper;
+using ChatApp.Server.Services;
+using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 
-namespace blazorTest.Server.Controllers
+namespace ChatApp.Server.Controllers
 {
     /// <summary>
     /// ルームに関するAPIを提供するクラス

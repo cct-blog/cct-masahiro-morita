@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<UserSecretsId>blazorTest.Server-E093FBED-CAD8-461F-BA4C-5F62D03ADBE7</UserSecretsId>
+		<UserSecretsId>ChatApp.Server-E093FBED-CAD8-461F-BA4C-5F62D03ADBE7</UserSecretsId>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
@@ -14,8 +14,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Client\blazorTest.Client.csproj" />
-		<ProjectReference Include="..\Shared\blazorTest.Shared.csproj" />
+		<ProjectReference Include="..\Client\ChatApp.Client.csproj" />
+		<ProjectReference Include="..\Shared\ChatApp.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

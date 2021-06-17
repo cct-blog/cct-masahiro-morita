@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Exceptions
+namespace ChatApp.Server.Exceptions
 {
     /// <summary>
     /// ビジネス例外の基底クラス。

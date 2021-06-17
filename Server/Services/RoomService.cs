@@ -1,13 +1,13 @@
-﻿using blazorTest.Server.Data;
-using blazorTest.Server.Models;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Data;
+using ChatApp.Server.Models;
+using ChatApp.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Services
+namespace ChatApp.Server.Services
 {
     public class RoomService
     {

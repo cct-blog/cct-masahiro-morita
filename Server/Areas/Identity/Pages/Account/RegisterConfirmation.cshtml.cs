@@ -1,4 +1,4 @@
-﻿using blazorTest.Server.Models;
+﻿using ChatApp.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Areas.Identity.Pages.Account
+namespace ChatApp.Server.Areas.Identity.Pages.Account
 {
     [AllowAnonymous]
     public class RegisterConfirmationModel : PageModel

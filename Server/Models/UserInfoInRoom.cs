@@ -1,7 +1,7 @@
 ﻿using System;
-using blazorTest.Shared.Models;
+using ChatApp.Shared.Models;
 
-namespace blazorTest.Server.Models
+namespace ChatApp.Server.Models
 {
     public class UserInfoInRoom : ICreateAndUpdateDate
     {

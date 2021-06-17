@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\blazorTest.Shared.csproj" />
+    <ProjectReference Include="..\Shared\ChatApp.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

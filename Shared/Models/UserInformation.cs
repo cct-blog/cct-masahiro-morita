@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace blazorTest.Shared.Models
+namespace ChatApp.Shared.Models
 {
     public record UserInformation
     {

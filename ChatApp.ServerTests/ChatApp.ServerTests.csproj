@@ -20,6 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Server\blazorTest.Server.csproj" />
+    <ProjectReference Include="..\Server\ChatApp.Server.csproj" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Exceptions
+namespace ChatApp.Server.Exceptions
 {
     public class HttpResponseExceptionFilter : IActionFilter, IOrderedFilter
     {

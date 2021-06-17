@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace blazorTest.Server.Migrations
+namespace ChatApp.Server.Migrations
 {
     public partial class RemoveNavigationProperty : Migration
     {

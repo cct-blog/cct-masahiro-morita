@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace blazorTest.Shared.Models
+namespace ChatApp.Shared.Models
 {
     /// <summary>
     /// 画面上でユーザーを扱うために必要な情報

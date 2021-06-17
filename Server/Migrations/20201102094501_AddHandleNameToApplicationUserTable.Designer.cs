@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using blazorTest.Server.Data;
+using ChatApp.Server.Data;
 
-namespace blazorTest.Server.Migrations
+namespace ChatApp.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20201102094501_AddHandleNameToApplicationUserTable")]
@@ -238,7 +238,7 @@ namespace blazorTest.Server.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.ApplicationUser", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -317,7 +317,7 @@ namespace blazorTest.Server.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.Post", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.Post", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -350,7 +350,7 @@ namespace blazorTest.Server.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.Room", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.Room", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -373,7 +373,7 @@ namespace blazorTest.Server.Migrations
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.Thread", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.Thread", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -406,7 +406,7 @@ namespace blazorTest.Server.Migrations
                     b.ToTable("Threads");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.UserInfoInRoom", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.UserInfoInRoom", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -441,7 +441,7 @@ namespace blazorTest.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", null)
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -450,7 +450,7 @@ namespace blazorTest.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", null)
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -465,7 +465,7 @@ namespace blazorTest.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", null)
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -474,48 +474,48 @@ namespace blazorTest.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", null)
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.Post", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.Post", b =>
                 {
-                    b.HasOne("blazorTest.Server.Models.Room", null)
+                    b.HasOne("ChatApp.Server.Models.Room", null)
                         .WithMany("Posts")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", "UserId")
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", "UserId")
                         .WithMany("Posts")
                         .HasForeignKey("UserIdId");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.Thread", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.Thread", b =>
                 {
-                    b.HasOne("blazorTest.Server.Models.Post", null)
+                    b.HasOne("ChatApp.Server.Models.Post", null)
                         .WithMany("Threads")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", "UserId")
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", "UserId")
                         .WithMany("Threads")
                         .HasForeignKey("UserIdId");
                 });
 
-            modelBuilder.Entity("blazorTest.Server.Models.UserInfoInRoom", b =>
+            modelBuilder.Entity("ChatApp.Server.Models.UserInfoInRoom", b =>
                 {
-                    b.HasOne("blazorTest.Server.Models.Room", null)
+                    b.HasOne("ChatApp.Server.Models.Room", null)
                         .WithMany("UserInfoInRooms")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("blazorTest.Server.Models.ApplicationUser", "UserId")
+                    b.HasOne("ChatApp.Server.Models.ApplicationUser", "UserId")
                         .WithMany("UserInfoInRooms")
                         .HasForeignKey("UserIdId");
                 });

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace blazorTest.Shared.Models
+namespace ChatApp.Shared.Models
 {
     public class UserSelection
     {

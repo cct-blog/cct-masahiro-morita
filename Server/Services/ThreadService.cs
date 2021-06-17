@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using blazorTest.Server.Data;
-using blazorTest.Shared.Models;
+using ChatApp.Server.Data;
+using ChatApp.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace blazorTest.Server.Services
+namespace ChatApp.Server.Services
 {
     public class ThreadService
     {

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using blazorTest.Client.Pages;
-using blazorTest.Client.Services;
-using blazorTest.Shared.Models;
+using ChatApp.Client.Pages;
+using ChatApp.Client.Services;
+using ChatApp.Shared.Models;
 using Oniqys.Blazor.ViewModel;
 
-namespace blazorTest.Client.ViewModel
+namespace ChatApp.Client.ViewModel
 {
     public class UserListViewModel : ContentBase
     {

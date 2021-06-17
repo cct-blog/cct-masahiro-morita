@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace blazorTest.Shared
+namespace ChatApp.Shared
 {
     public enum ErrorType
     {
