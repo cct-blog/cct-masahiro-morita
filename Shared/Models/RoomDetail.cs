@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace blazorTest.Shared.Models
+namespace ChatApp.Shared.Models
 {
     public record RoomDetail
     {
@@ -18,6 +18,6 @@ namespace blazorTest.Shared.Models
 
         public DateTime LastAccessedDate { get; init; }
 
-        public List<string> UserName { get; init; }
+        public List<UserInformation> Users { get; init; }
     }
 }

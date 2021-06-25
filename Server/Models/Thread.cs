@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using ChatApp.Shared.Models;
+using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace blazorTest.Server.Models
+namespace ChatApp.Server.Models
 {
     public class Thread : ICreateAndUpdateDate
     {
@@ -19,5 +16,9 @@ namespace blazorTest.Server.Models
         public DateTime CreateDate { get; set; }
 
         public DateTime UpdateDate { get; set; }
+
+        public ApplicationUser ApplicationUser { get; set; }
+
+        public Post Post { get; set; }
     }
 }

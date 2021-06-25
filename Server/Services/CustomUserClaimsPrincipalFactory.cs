@@ -1,4 +1,4 @@
-﻿using blazorTest.Server.Models;
+﻿using ChatApp.Server.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Services
+namespace ChatApp.Server.Services
 {
     public class CustomUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser>
     {

@@ -1,14 +1,15 @@
-﻿using blazorTest.Server.Data;
-using blazorTest.Server.Models;
-using blazorTest.Shared.Models;
+﻿using ChatApp.Server.Data;
+using ChatApp.Server.Models;
+using ChatApp.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace blazorTest.Server.Services
+namespace ChatApp.Server.Services
 {
-    public class RoomService : IService
+    public class RoomService
     {
         private readonly ApplicationDbContext _context;
 
@@ -17,104 +18,188 @@ namespace blazorTest.Server.Services
             _context = context;
         }
 
-        public IEnumerable<UserRoom> ReadRoomListOfUser(string userEmail)
-        {
-            var user = _context.Users
-                .Where(_user => _user.Email == userEmail)
-                .FirstOrDefault();
-
-            return _context.Rooms
-                .Include(room => room.UserInfoInRooms)
-                //.Where(_room => _room.UserInfoInRooms
-                //    .Where(_userInfoInRooms => _userInfoInRooms.ApplicationUserId == user.Id)
-                //    .Count() >= 1)
-                .Select(_room => new UserRoom() { Id = _room.Id, Name = _room.Name })
-                .AsEnumerable();
-        }
-
-        private RoomDetail ReadRoomDetail(IQueryable<Room> rooms) =>
-                rooms
-                .Include(_room => _room.UserInfoInRooms)
-                    .ThenInclude(_userInfoInRooms => _userInfoInRooms.ApplicationUser)
-                .Select(_room => new RoomDetail()
+        /// <summary>
+        /// ユーザーの所属するルームの一覧を取得します。
+        /// </summary>
+        /// <param name="userId">ユーザーId</param>
+        /// <returns></returns>
+        public async Task<IEnumerable<UserRoom>> ReadRooms(string userId)
+            => await _context.UserInfoInRooms
+                .Include(userInfoInRooms => userInfoInRooms.Room)
+                .Where(userInfoInRoom => userInfoInRoom.ApplicationUserId == userId)
+                .Select(userInfoInRoom => new UserRoom()
                 {
-                    RoomId = _room.Id,
-                    RoomName = _room.Name,
-                    CreateDate = _room.CreateDate,
-                    UpdateDate = _room.UpdateDate,
-                    UserName = _room.UserInfoInRooms.Select(_m => _m.ApplicationUser.HandleName).ToList()
+                    Id = userInfoInRoom.Room.Id,
+                    Name = userInfoInRoom.Room.Name,
+                    LastAccessDate = userInfoInRoom.LatestAccessDate
                 })
-                .AsEnumerable()
-                .First();
+                .ToArrayAsync();
 
-        internal RoomDetail ReadRoomDetailFromId(Guid id)
+        /// <summary>
+        /// IDからRoom情報を取得します。
+        /// </summary>
+        /// <param name="id">ルームId</param>
+        /// <returns></returns>
+        internal async Task<Room> ReadRoom(Guid id)
+            => await _context.Rooms
+                .FirstOrDefaultAsync(room => room.Id == id);
+
+        /// <summary>
+        /// ルーム名からRoomの詳細情報を取得します。
+        /// </summary>
+        /// <param name="name">ルームの名前</param>
+        /// <returns></returns>
+        internal async Task<RoomDetail> ReadRoomDetail(string name)
         {
-            var roomQuery = _context.Rooms.Where(_room => _room.Id == id);
-            return ReadRoomDetail(roomQuery);
+            var room = await _context.Rooms
+                .Include(room => room.UserInfoInRooms)
+                .ThenInclude(userInfoInRooms => userInfoInRooms.ApplicationUser)
+                .FirstOrDefaultAsync(room => room.Name == name);
+
+            return CreateRoomDetail(room);
         }
 
-        internal RoomDetail ReadRoomDetailFromName(string name)
+        /// <summary>
+        /// ルームIDからRoomの詳細情報を取得します。
+        /// </summary>
+        /// <param name="id">rルームId</param>
+        /// <returns></returns>
+        internal async Task<RoomDetail> ReadRoomDetail(Guid id)
         {
-            var roomQuery = _context.Rooms.Where(_room => _room.Name == name);
-            return ReadRoomDetail(roomQuery);
+            var room = await _context.Rooms
+                .Include(room => room.UserInfoInRooms)
+                .ThenInclude(userInfoInRooms => userInfoInRooms.ApplicationUser)
+                .FirstOrDefaultAsync(room => room.Id == id);
+
+            return CreateRoomDetail(room);
         }
 
-        internal RoomDetail AddUserToRoom(List<string> userEmails, Guid roomId)
+        /// <summary>
+        /// DBから取得したRoom情報をRoomDetailの形に加工します。
+        /// </summary>
+        /// <param name="room">Room</param>
+        /// <returns></returns>
+        private static RoomDetail CreateRoomDetail(Room room)
         {
-            var users = _context.Users
-                .Where(_user => userEmails.Contains(_user.Email))
-                .ToList();
+            if (room is null) return null;
 
-            users.ForEach(_user =>
+            var userInfoInRooms = room.UserInfoInRooms
+                .Select(userInfoInRoom => new UserInformation()
+                {
+                    HandleName = userInfoInRoom.ApplicationUser.HandleName,
+                    Email = userInfoInRoom.ApplicationUser.Email,
+                    LastAccessDate = userInfoInRoom.LatestAccessDate
+                }).ToList();
+
+            return new RoomDetail()
             {
-                var userInfoInRoom = new UserInfoInRoom() { ApplicationUserId = _user.Id, RoomId = roomId };
-                _context.Add(userInfoInRoom);
-            });
-
-            _context.SaveChanges();
-
-            return ReadRoomDetailFromId(roomId);
+                RoomId = room.Id,
+                RoomName = room.Name,
+                CreateDate = room.CreateDate,
+                UpdateDate = room.UpdateDate,
+                Users = userInfoInRooms
+            };
         }
 
-        internal RoomDetail CreateRoom(CreateRoom createRoom)
+        /// <summary>
+        /// ルームにユーザーを追加します。
+        /// </summary>
+        /// <param name="users">追加するApplicationUserの一覧</param>
+        /// <param name="roomId">ルームId</param>
+        /// <returns></returns>
+        internal async Task AddUser(IEnumerable<ApplicationUser> users, Guid roomId)
         {
-            var userData = createRoom.UserIds
-                .Select(_userEmail => _context.Users
-                    .Where(_user => _user.Email == _userEmail)
-                    .AsEnumerable()
-                    .First())
-                .ToList();
+            foreach (var user in users)
+            {
+                var userInfoInRoom = new UserInfoInRoom() { ApplicationUserId = user.Id, RoomId = roomId };
+                _context.Add(userInfoInRoom);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// ルームを新たに作成します。
+        /// </summary>
+        /// <param name="userData">追加するApplicationUserの一覧</param>
+        /// <param name="roomName">作成するルームの名前</param>
+        /// <returns></returns>
+        internal async Task CreateRoom(IEnumerable<ApplicationUser> userData, string roomName)
+        {
+            var lastAccessDate = DateTime.Now;
 
             var userInfoInRooms = userData
-                .Select(_m => new UserInfoInRoom()
+                .Select(user => new UserInfoInRoom()
                 {
-                    ApplicationUserId = _m.Id,
-                    LatestAccessDate = DateTime.Now
+                    ApplicationUserId = user.Id,
+                    LatestAccessDate = lastAccessDate
                 })
                 .ToList();
 
             _context.Rooms
                 .Add(new Room()
                 {
-                    Name = createRoom.RoomName,
+                    Name = roomName,
                     UserInfoInRooms = userInfoInRooms
                 });
-            _context.SaveChanges();
-
-            return ReadRoomDetailFromName(createRoom.RoomName);
+            await _context.SaveChangesAsync();
         }
 
-        internal void DeleteRoom(Guid roomId)
+        /// <summary>
+        /// ルームを削除します。
+        /// </summary>
+        /// <param name="room">Room</param>
+        /// <returns></returns>
+        internal async Task DeleteRoom(Room room)
         {
-            var room = _context.Rooms
-                .Where(_room => _room.Id == roomId)
-                .FirstOrDefault();
-
-            if (room is not null)
-            {
-                _context.Remove(room);
-                _context.SaveChanges();
-            }
+            _context.Remove(room);
+            await _context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// ルームからユーザーを削除します。
+        /// </summary>
+        /// <param name="userInfoInRoom">UserInfoInRoom</param>
+        /// <returns></returns>
+        internal async Task DeleteUserInfoInRoom(UserInfoInRoom userInfoInRoom)
+        {
+            _context.Remove(userInfoInRoom);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// ユーザーがルームにアクセスした最終アクセス日時を更新します。
+        /// </summary>
+        /// <param name="userInfoInRoom">UserInfoInRoom</param>
+        /// <returns></returns>
+        internal async Task PutRoomLastAccessDate(UserInfoInRoom userInfoInRoom)
+        {
+            userInfoInRoom.LatestAccessDate = DateTime.Now;
+
+            _context.Update(userInfoInRoom);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// RoomとApplicationUserの中間テーブルを取得します。
+        /// </summary>
+        /// <param name="userId">ユーザーId</param>
+        /// <param name="roomId">ルームId</param>
+        /// <returns></returns>
+        internal async Task<UserInfoInRoom> ReadUserInfoInRoom(string userId, Guid roomId)
+            => await _context.UserInfoInRooms
+                .FirstOrDefaultAsync(userInfoInRoom => userInfoInRoom.RoomId == roomId
+                    && userId == userInfoInRoom.ApplicationUserId);
+
+        /// <summary>
+        /// Roomに所属するすべてのユーザーを取得します。
+        /// </summary>
+        /// <param name="roomId">ルームId</param>
+        /// <returns>UserInfoInRoomの配列</returns>
+        internal async Task<IEnumerable<UserInfoInRoom>> ReadUsersBelongedToRoom(Guid roomId)
+            => await _context.UserInfoInRooms
+                    .Include(userInfoInRoom => userInfoInRoom.ApplicationUser)
+                    .Where(userInfoInRoom => userInfoInRoom.RoomId == roomId)
+                    .ToArrayAsync();
     }
 }

@@ -2,13 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.0.0
 MinimumVisualStudioVersion = 16.0.0.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blazorTest.Server", "Server\blazorTest.Server.csproj", "{F1A8C24F-AB6F-40FC-8A4C-DED4F16B9671}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatApp.Server", "Server\ChatApp.Server.csproj", "{F1A8C24F-AB6F-40FC-8A4C-DED4F16B9671}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blazorTest.Client", "Client\blazorTest.Client.csproj", "{8A25875F-0BAA-4BA7-8952-722D12226BCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatApp.Client", "Client\ChatApp.Client.csproj", "{8A25875F-0BAA-4BA7-8952-722D12226BCA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blazorTest.Shared", "Shared\blazorTest.Shared.csproj", "{9B0B095C-1314-4E9F-918B-EFD644B8537C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatApp.Shared", "Shared\ChatApp.Shared.csproj", "{9B0B095C-1314-4E9F-918B-EFD644B8537C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "blazorTest.ServerTests", "blazorTest.ServerTests\blazorTest.ServerTests.csproj", "{15AD1B8A-F004-4C38-9BAE-0FE7A8DDE90F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatApp.ServerTests", "ChatApp.ServerTests\ChatApp.ServerTests.csproj", "{15AD1B8A-F004-4C38-9BAE-0FE7A8DDE90F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4793286D-D9D7-4D52-B36C-A820D352CCEE}"
 	ProjectSection(SolutionItems) = preProject

@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Authorization
-@using blazorTest.Shared.Models
-@using blazorTest.Client.Services
+@using ChatApp.Shared.Models
+@using ChatApp.Client.Services
+@using Oniqys.Blazor.ViewModel
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 @inject IRoomManager RoomManager
@@ -64,6 +65,8 @@
 
     private List<UserRoom> rooms;
 
+    //private List<Selectable<UserInformation>> Users { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         RoomManager.RoomChanged += (s, e) =>
@@ -71,6 +74,10 @@
             rooms = e;
             StateHasChanged();
         };
+
+        //var users = await HttpClient.GetFromJsonAsync<List<UserInformation>>("User");
+
+        //Users = users.Select(each => new Selectable<UserInformation> { Content = each, IsEnabled = true, IsSelected = false }).ToList();
 
         await RefreshRooms();
     }

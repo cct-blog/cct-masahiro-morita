@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace blazorTest.Server.Areas.Identity.Pages.Account.Manage
+namespace ChatApp.Server.Areas.Identity.Pages.Account.Manage
 {
     public static class ManageNavPages
     {

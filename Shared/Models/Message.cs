@@ -1,20 +1,12 @@
 ﻿using System;
 
-namespace blazorTest.Shared.Models
+namespace ChatApp.Shared.Models
 {
-    public record Message
+    public record Message : MessageBase
     {
         /// <summary>
         /// PostId
         /// </summary>
-        public Guid Id { get; set; }
-
-        public string UserEmail { get; init; }
-
-        public string HandleName { get; init; }
-
-        public string MessageContext { get; init; }
-
-        public Guid RoomId { get; init; }
+        public Guid Id { get; init; }
     }
 }

@@ -1,0 +1,27 @@
+﻿@using System;
+@using ChatApp.Shared.Models;
+
+<div class="row">
+    <span>
+        @if (Selectable)
+        {
+            <InputCheckbox Value=@IsSelected ValueChanged="@(arg => { IsSelected = arg; IsSelectedChanged.InvokeAsync(arg); })" />
+        }
+    </span>
+    <span>
+        @User.HandleName
+    </span>
+</div>
+@code {
+    [Parameter]
+    public bool Selectable { get; set; }
+
+    [Parameter]
+    public bool IsSelected { get; set; }
+
+    [Parameter]
+    public User User { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsSelectedChanged { get; set; }
+}

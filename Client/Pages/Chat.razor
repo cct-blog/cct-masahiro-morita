@@ -1,21 +1,26 @@
 ﻿@page "/chat/{roomId:guid}"
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
-@using System.Text.Json
-@using blazorTest.Shared;
-@using blazorTest.Shared.Models;
+@using ChatApp.Client.Models;
+@using ChatApp.Client.ViewModel;
+@using ChatApp.Shared;
+@using ChatApp.Shared.Models;
+@using Oniqys.Blazor.ViewModel;
+@using Oniqys.Blazor.Controls;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HubUtility HubUtility
 @attribute [Authorize]
 @implements IDisposable
+@implements Chat.IPresenter
 
 <style type="text/css">
     .layout {
         display: grid;
         height: calc(100vh - 100px);
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr auto;
         grid-template-rows: calc(100vh - 150px) 50px; /* adjustment */
     }
 
@@ -23,6 +28,15 @@
         grid-column: 1;
         grid-row: 1;
         overflow-y: auto;
+    }
+
+    .righttab {
+        grid-column: 2;
+        grid-row: 1;
+        overflow-y: auto;
+        margin-right: 10px;
+        max-width: 350px;
+        background-color: #090040;
     }
 
     .input {
@@ -41,50 +55,185 @@
     .inputbox {
         height: 48px;
     }
+
+    .header {
+        height: 48px;
+    }
 </style>
 
 <div class="layout">
     <AuthorizeView>
         <Authorized>
-            <div class="content margin-left">
-                @foreach (var message in Messages)
+            <div class="righttab">
+                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenUserList())">
+                    <span class="oi oi-chat" aria-hidden="true"></span>
+                </button>
+                @if (IsOpenedUserList)
                 {
-                    <div id="@message.Id" class="margin">
-                        <PostItem Name="@message.HandleName" Message="@message.MessageContext" />
+                    <RoomUserList DataContext="ViewModel.UserList" />
+                }
+                else if (CurrentThreadId != Guid.Empty && _currentThread != null)
+                {
+                    <div class="margin">
+                        <PostItem Message="@_currentThread.ParentMessage" />
                     </div>
+                    <ThreadView DataContext="_currentThread" />
                 }
             </div>
-            <div class="form-group margin-left input">
-                <div class="row margin">
-                    <textarea class="col margin inputbox" value="@_messageInput" @oninput="OnInput" @onkeydown="OnKeyDown" id="messageInput" />
-                    <button class="col-md-auto margin btn btn-primary" id="sender" @onclick="Send">送信(Alt+Enter)</button>
-                </div>
+            <div class="content margin-left">
+                @foreach (var poster in ViewModel.ThreadPosters)
+                {
+                    <div id="@poster.ParentMessage.Id" class="margin">
+                        <span>
+                            <PostItem Message="@poster.ParentMessage">
+                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenInnerThread(poster))">
+                                    <span class="oi oi-document" aria-hidden="true"></span>
+                                </button>
+                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenThread(poster.ParentMessage.Id))">
+                                    <span class="oi oi-arrow-right" aria-hidden="true"></span>
+                                </button>
+                            </PostItem>
+                        </span>
+                    </div>
+                    if (poster.ThreadOpend)
+                    {
+                        <ThreadView DataContext="poster" />
+                    }
+                }
             </div>
+            <MessageInput DataContext="ViewModel.MessagePoster" />
             <AnchorNavigation />
         </Authorized>
     </AuthorizeView>
 </div>
 
 @code {
-    private HubConnection _hubConnection;
 
-    private string _messageInput;
-
-    List<Message> _messages = new List<Message>();
-
-    private List<Message> Messages
+    public record UserInfo
     {
-        get => _messages;
+        public string Id { get; init; }
+
+        public string Name { get; init; }
+    }
+
+    #region Chat.IPresenter
+
+    public interface IPresenter
+    {
+        Task<UserInfo> GetUserAsync();
+
+        HttpClient GetHttpClient();
+
+        NavigationManager GetNavigationManager();
+
+        HubConnection GetHabConnection();
+
+        void Invalidate();
+
+        void NavigateToLast();
+
+        void SetFocus(string elementId);
+    }
+
+    public async Task<UserInfo> GetUserAsync()
+    {
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+
+        return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
+    }
+
+    public HttpClient GetHttpClient() => HttpClient;
+
+    public NavigationManager GetNavigationManager() => NavigationManager;
+
+    public HubConnection GetHabConnection() => _hubConnection;
+
+    public void Invalidate() => StateHasChanged();
+
+    public void SetFocus(string elementId) => _nextFocusElementId = elementId;
+
+    #endregion
+
+    private string _nextFocusElementId;
+
+    private bool _isOpenedUserList;
+
+    private bool IsOpenedUserList
+    {
+        get => _isOpenedUserList;
         set
         {
-            _messages = value;
+            if (_isOpenedUserList == value)
+                return;
+
+            _isOpenedUserList = value;
+            _currentThreadId = Guid.Empty;
             StateHasChanged();
         }
     }
 
+    private Guid _currentThreadId;
+
+    private Guid CurrentThreadId
+    {
+        get => _currentThreadId;
+        set
+        {
+            if (_currentThreadId == value)
+                return;
+
+            _isOpenedUserList = false;
+            _currentThreadId = value;
+            _currentThread = ViewModel.ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == CurrentThreadId);
+            StateHasChanged();
+        }
+    }
+
+    private PostViewModel _currentThread;
+
+    private HubConnection _hubConnection;
+
     private string _fragment;
 
     private Guid _roomId;
+
+    private async Task OpenThread(Guid id)
+    {
+        if (CurrentThreadId == id)
+        {
+            CurrentThreadId = Guid.Empty;
+            return;
+        }
+        else
+        {
+            CurrentThreadId = id;
+            await UpdateThread(_currentThread);
+        }
+    }
+
+    private async Task UpdateThread(PostViewModel thread)
+    {
+        thread.Messages.Clear();
+        foreach (var message in await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + thread.ParentMessage.Id.ToString()))
+        {
+            thread.Messages.Add(message);
+        }
+    }
+
+    private async Task OpenInnerThread(PostViewModel poster)
+    {
+        poster.ThreadOpend = !poster.ThreadOpend;
+        await UpdateThread(poster);
+
+        StateHasChanged();
+    }
+
+    private void OpenUserList()
+    {
+        IsOpenedUserList = !IsOpenedUserList;
+    }
+
+    private ChatViewModel ViewModel { get; set; }
 
     [Parameter]
     public Guid RoomId
@@ -96,8 +245,10 @@
                 return;
 
             _roomId = value;
+            ViewModel ??= new ChatViewModel(this as IPresenter, _roomId);
+            ViewModel.ThreadPosters.Clear();
+            ViewModel.RoomId = _roomId;
             _fragment = null;
-            Messages = new List<Message>();
         }
     }
 
@@ -105,16 +256,41 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"))
-            .Build();
+        ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+        await ViewModel.OnInitializedAsync();
+
+        _hubConnection = HubUtility.CreateHubConnection();
 
         _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, (message) =>
         {
             if (message.RoomId != _roomId)
                 return;
 
-            Messages.Add(message);
+            ViewModel.OnMessagePosted(message);
+            StateHasChanged();
+        });
+
+        _hubConnection.On<ThreadMessage>(SignalRMehod.SendThreadMessage, (message) =>
+        {
+            var thread = ViewModel.ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == message.PostId);
+            if (thread == null)
+                return;
+
+            var threadMessage = thread.Messages.Cast<ThreadMessage>().FirstOrDefault(each => each.ThreadId == message.ThreadId);
+            if (threadMessage == null)
+            {
+                thread.Messages.Add(message);
+            }
+            else
+            {
+                var index = thread.Messages.IndexOf(threadMessage);
+                if (index >= 0)
+                {
+                    thread.Messages.RemoveAt(index);
+                    thread.Messages.Insert(index, message);
+                }
+
+            }
             StateHasChanged();
         });
 
@@ -134,26 +310,11 @@
         await base.OnAfterRenderAsync(firstRender);
 
         NavigateToLast();
-        await Focus("messageInput");
-    }
-
-    private async Task Send()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-
-        var message = new Message()
+        if (!string.IsNullOrEmpty(_nextFocusElementId))
         {
-            Id = Guid.Empty,
-            UserEmail = authState.User.Identity.Name,
-            HandleName = authState.User.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value,
-            MessageContext = _messageInput,
-            RoomId = RoomId
-        };
-
-        _fragment = null;
-        _messageInput = string.Empty;
-
-        await _hubConnection.SendAsync(SignalRMehod.SendMessage, message);
+            await Focus(_nextFocusElementId);
+            _nextFocusElementId = null;
+        }
     }
 
     /// <summary>
@@ -164,22 +325,23 @@
         var nowDate = DateTime.Now;
         var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
 
-
         var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
+        var messages = await response.Content.ReadFromJsonAsync<List<Message>>();
 
-        Messages = await response.Content.ReadFromJsonAsync<List<Message>>();
+        foreach (var message in messages)
+            ViewModel.OnMessagePosted(message);
     }
 
     /// <summary>
     /// 最後のアンカーにスクロールするためにナビゲーションします。ただし、全ての描画が終わっている必要があります。
     /// </summary>
-    private void NavigateToLast()
+    public void NavigateToLast()
     {
-        var count = Messages.Count;
+        var count = ViewModel.ThreadPosters.Count;
         if (count == 0)
             return;
 
-        var message = Messages[count - 1];
+        var message = ViewModel.ThreadPosters[count - 1].ParentMessage;
 
         var url = NavigationManager.Uri.Split("#");
         if (url.Length == 1 || url.Length >= 2 && Guid.TryParse(url[1], out var lastMessageId) && lastMessageId != message.Id)
@@ -188,22 +350,6 @@
                 _fragment = url[1];
 
             NavigationManager.NavigateTo($"{url[0]}#{message.Id}", true);
-        }
-    }
-
-    private void OnInput(ChangeEventArgs e)
-    {
-        _messageInput = e.Value.ToString();
-    }
-
-    private async Task OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.AltKey && (e.Code == "Enter" || e.Code == "NumpadEnter"))
-        {
-            if (string.IsNullOrWhiteSpace(_messageInput))
-                return;
-
-            await Send();
         }
     }
 

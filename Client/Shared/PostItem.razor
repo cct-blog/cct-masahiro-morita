@@ -1,28 +1,64 @@
-﻿<style type="text/css">
-    .message {
-        text-indent: 1em;
-    }
-</style>
+﻿@using ChatApp.Shared.Models;
+@using ChatApp.Client.ViewModel;
+@using Oniqys.Blazor.Controls;
+@inherits ViewComponentBase<PostViewModel>
 
+@if (Message != null)
+{
+    <style type="text/css">
+        .message {
+            text-indent: 1em;
+            text-wrap: avoid;
+            overflow-wrap: break-word;
+        }
+    </style>
 
-
-<div>
-    <small class="text-white-50">@Name</small>
-    <div class="rounded border border-dark bg-dark text-white">
-        @foreach (var line in Message?.Split("\n") ?? Enumerable.Empty<string>())
+    <div>
+        <small class="text-white-50">@Message.HandleName</small>
+        <small class="text-white-50"> (@Message.CreateDate)</small>
+        @if (Message.CreateDate != Message.UpdateDate)
         {
-            <div class="message text-white">
-                <span>@line</span>
+            <small class="text-white-50"> 更新日時 @Message.UpdateDate</small>
+        }
+        @if (CanEdit)
+        {
+            <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenEditor())">
+                <span class="oi oi-tablet" aria-hidden="true"></span>
+            </button>
+        }
+        @ChildContent
+        @if (_isEditMode && CanEdit)
+        {
+        }
+        else
+        {
+            <div class="rounded border border-dark bg-dark text-white">
+                @foreach (var line in Message.MessageContext.Split("\n") ?? Enumerable.Empty<string>())
+                {
+                    <div class="text-white">
+                        <span class="message">@line</span>
+                    </div>
+                }
             </div>
         }
     </div>
-</div>
+}
 
 @code {
-    [Parameter]
-    public string Name { get; set; }
+    private bool _isEditMode;
 
     [Parameter]
-    public string Message { get; set; }
+    public bool CanEdit { get; set; }
 
+    [Parameter]
+    public MessageBase Message { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private void OpenEditor()
+    {
+        _isEditMode = !_isEditMode;
+        StateHasChanged();
+    }
 }

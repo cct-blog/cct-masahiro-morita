@@ -1,0 +1,18 @@
+﻿@using ChatApp.Shared.Models
+@using Oniqys.Blazor.Controls
+@using Oniqys.Blazor.ViewModel
+@using ChatApp.Client.Shared
+@inherits ViewComponentBase<ContentCollection<UserInformation>>
+
+<ListView Items="@Users">
+    <ItemTemplate Context="user">
+        <UserItem Name="@user.HandleName" />
+    </ItemTemplate>
+</ListView>
+
+@code {
+    /// <summary>
+    /// 一覧するユーザー
+    /// </summary>
+    public ContentCollection<UserInformation> Users => DataContext;
+}

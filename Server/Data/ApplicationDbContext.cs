@@ -1,14 +1,15 @@
-﻿using blazorTest.Server.Models;
+﻿using ChatApp.Server.Models;
+using ChatApp.Shared.Models;
 using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace blazorTest.Server.Data
+namespace ChatApp.Server.Data
 {
     public class ApplicationDbContext : ApiAuthorizationDbContext<ApplicationUser>
     {
@@ -20,13 +21,19 @@ namespace blazorTest.Server.Data
 
         public DbSet<Post> Posts { get; set; }
         public DbSet<Room> Rooms { get; set; }
-        public DbSet<Thread> Threads { get; set; }
+        public DbSet<Models.Thread> Threads { get; set; }
         public DbSet<UserInfoInRoom> UserInfoInRooms { get; set; }
 
         public override int SaveChanges()
         {
             SetProperties();
             return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            SetProperties();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
 
         public void SetProperties()

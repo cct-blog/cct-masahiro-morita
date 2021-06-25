@@ -19,7 +19,7 @@ insert_final_newline = false
 
 # using の整理
 dotnet_separate_import_directive_groups = false
-dotnet_sort_system_directives_first = false
+dotnet_sort_system_directives_first = true
 file_header_template = unset
 
 # this. と Me. の設定
@@ -114,7 +114,7 @@ csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
 
 # 'using' ディレクティブの基本設定
-csharp_using_directive_placement = outside_namespace:silent
+csharp_using_directive_placement =outside_namespace:suggestion
 
 #### C# 書式ルール ####
 
@@ -204,3 +204,8 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix = 
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+[*.{cs,vb}]
+dotnet_style_parentheses_in_arithmetic_binary_operators=never_if_unnecessary:silent
+dotnet_style_parentheses_in_other_binary_operators=never_if_unnecessary:silent
+dotnet_style_parentheses_in_relational_binary_operators=never_if_unnecessary:silent
