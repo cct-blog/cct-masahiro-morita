@@ -1,10 +1,11 @@
 ﻿@using ChatApp.Shared.Models
 @using ChatApp.Shared;
+@using ChatApp.Client.Models
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
 @inject HubUtility HubUtility
-@inject HttpClient HttpClient
+@inject IHttpClientFactory IHttpClientFactory
 @inject IRoomManager RoomManager
 
 <style>
@@ -34,11 +35,11 @@
         <AuthorizeView>
             <Authorized>
                 <li class="nav-item px-3">@_mentionMessage</li>
-                @foreach (var room in rooms)
+                @foreach (var room in indexModel.RoomModels)
                 {
                     <li class="nav-item px-3">
-                        <NavLink class="nav-link" href=@("chat/" + room.Id) Match="NavLinkMatch.All">
-                            <span class="oi oi-document" aria-hidden="true"></span>@room.Name
+                        <NavLink class="nav-link" href=@("chat/" + room.RoomId) Match="NavLinkMatch.All">
+                            <span class="oi oi-document" aria-hidden="true"></span>@room.RoomName
                         </NavLink>
                     </li>
                 }
@@ -52,11 +53,11 @@
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private List<UserRoom> rooms = new List<UserRoom>();
-
     private HubConnection _hubConnection;
 
     private string _mentionMessage;
+
+    private IndexModel indexModel;
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
@@ -72,12 +73,11 @@
 
         if (authState.User.Identity.IsAuthenticated)
         {
-            RoomManager.RoomChanged += (s, e) =>
-            {
-                rooms = e;
-                StateHasChanged();
-            };
-            await UpdateRooms();
+            indexModel = new IndexModel(IHttpClientFactory);
+
+            await indexModel.GetUserBelongedRoomsAsync();
+
+            StateHasChanged();
         }
 
         _hubConnection = HubUtility.CreateHubConnection();
@@ -91,12 +91,11 @@
         await _hubConnection.StartAsync();
     }
 
-    public async Task OnRoomsChanged() => await UpdateRooms();
+    public void OnRoomsChanged(Object sender, List<RoomModel> e) => StateHasChanged();
 
-    private async Task UpdateRooms()
+    public void Dispose()
     {
-        RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
+        indexModel.RoomListChanged -= OnRoomsChanged;
+        _ = _hubConnection.DisposeAsync();
     }
-
-    public void Dispose() => _ = _hubConnection.DisposeAsync();
 }

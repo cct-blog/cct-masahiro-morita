@@ -1,9 +1,10 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using ChatApp.Shared.Models
 @using ChatApp.Client.Services
+@using ChatApp.Client.Models
 @using Oniqys.Blazor.ViewModel
 @inject NavigationManager NavigationManager
-@inject HttpClient HttpClient
+@inject IHttpClientFactory IHttpClientFactory
 @inject IRoomManager RoomManager
 @attribute [Authorize]
 @page "/"
@@ -23,11 +24,11 @@
         <Authorized>
             <div class="margin8">
                 @{ userEmail = context.User.Identity.Name;}
-                @if (rooms is null)
+                @if (indexModel.RoomModels is null)
                 {
                     <div>ルームを読み取り中…</div>
                 }
-                else if (rooms.Count == 0)
+                else if (indexModel.RoomModels.Count == 0)
                 {
                 }
                 else
@@ -36,10 +37,10 @@
                         <span class="navbar-brand mb-0 h1 text-white-50">チャットルームを選択してください</span>
                     </nav>
                     <div class="d-flex flex-wrap">
-                        @foreach (var room in rooms)
+                        @foreach (var room in indexModel.RoomModels)
                         {
-                            <NavLink class="btn btn-secondary margin8" href=@("chat/" + room.Id)>
-                                <span class="oi oi-document" aria-hidden="true"></span>@room.Name
+                            <NavLink class="btn btn-secondary margin8" href=@("chat/" + room.RoomId)>
+                                <span class="oi oi-document" aria-hidden="true"></span>@room.RoomName
                             </NavLink>
                         }
                     </div>
@@ -48,12 +49,11 @@
 
                 <div class="d-flex flex-wrap">
                     <input class="margin8" type="text" @bind="newRoomName" />
-                    <button class="btn btn-primary" @onclick="CreateRoom">新規ルーム作成</button>
+                    <button class="btn btn-primary" @onclick="CreateRoomAsync">新規ルーム作成</button>
                 </div>
             </div>
         </Authorized>
     </AuthorizeView>
-
 </div>
 
 @code {
@@ -63,37 +63,35 @@
 
     private string userEmail;
 
-    private List<UserRoom> rooms;
-
-    //private List<Selectable<UserInformation>> Users { get; set; }
+    private IndexModel indexModel;
 
     protected override async Task OnInitializedAsync()
     {
-        RoomManager.RoomChanged += (s, e) =>
-        {
-            rooms = e;
-            StateHasChanged();
-        };
 
-        //var users = await HttpClient.GetFromJsonAsync<List<UserInformation>>("User");
+        indexModel = new IndexModel(IHttpClientFactory);
 
-        //Users = users.Select(each => new Selectable<UserInformation> { Content = each, IsEnabled = true, IsSelected = false }).ToList();
+        indexModel.RoomListChanged += ChangeRoomsEvent;
 
-        await RefreshRooms();
+        await indexModel.GetUserBelongedRoomsAsync();
+
+        StateHasChanged();
     }
 
-    private async Task CreateRoom()
+    private void ChangeRoomsEvent(Object sender, List<RoomModel> e)
+    {
+        if (e.Equals(indexModel.RoomModels))
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreateRoomAsync()
     {
         if (!CanCareateNewRoom)
             return;
 
-        var result = await HttpClient.PostAsJsonAsync<CreateRoom>("Room", new CreateRoom { RoomName = newRoomName, UserIds = new List<string> { userEmail } });
-
-        await RefreshRooms();
+        await indexModel.CreateRoomAsync(newRoomName, new List<string> { userEmail });
     }
 
-    private async Task RefreshRooms()
-    {
-        RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
-    }
+    public void Dispose() => indexModel.RoomListChanged -= ChangeRoomsEvent;
 }
