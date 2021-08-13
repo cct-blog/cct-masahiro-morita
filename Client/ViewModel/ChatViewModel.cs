@@ -11,7 +11,7 @@ namespace ChatApp.Client.ViewModel
 {
     public class ChatViewModel : ContentBase
     {
-        private readonly ChatModel _model = new();
+        private readonly ChatModel _model;
 
         private Guid _roomId;
 
@@ -20,6 +20,7 @@ namespace ChatApp.Client.ViewModel
             get => _roomId;
             set => ValueChangeProcess(ref _roomId, value);
         }
+
         private readonly Chat.IPresenter _presenter;
 
         public UserListViewModel UserList { get; set; }
@@ -27,7 +28,6 @@ namespace ChatApp.Client.ViewModel
         public ContentCollection<PostViewModel> ThreadPosters { get; } = new ContentCollection<PostViewModel>();
 
         public PostViewModel MessagePoster { get; }
-
 
         public Selectable UserListTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
@@ -43,6 +43,8 @@ namespace ChatApp.Client.ViewModel
 
             ThreadPosters.CollectionChanged += (s, e) => _presenter.Invalidate();
             ThreadPosters.PropertyChanged += (s, e) => _presenter.Invalidate();
+
+            _model = new ChatModel(_presenter.GetHttpClient(), _presenter.GetHabConnection(), roomId);
         }
 
         public async Task Refresh(Guid roomId)
@@ -87,7 +89,7 @@ namespace ChatApp.Client.ViewModel
                 RoomId = _roomId
             };
 
-            await _model.SendMessage(message, _presenter.GetHabConnection());
+            await _model.SendMessageAsync(message);
         }
 
         /// <summary>
@@ -107,7 +109,7 @@ namespace ChatApp.Client.ViewModel
                 RoomId = _roomId
             };
 
-            await _presenter.GetHttpClient().PostAsJsonAsync("Thread", message);
+            await _model.SendThreadMessageAsync(message);
         }
     }
 }
