@@ -245,6 +245,7 @@
                 return;
 
             _roomId = value;
+            _hubConnection = HubUtility.CreateHubConnection();
             ViewModel ??= new ChatViewModel(this as IPresenter, _roomId);
             ViewModel.ThreadPosters.Clear();
             ViewModel.RoomId = _roomId;
@@ -256,45 +257,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ViewModel = new ChatViewModel(this as IPresenter, _roomId);
-        await ViewModel.OnInitializedAsync();
-
         _hubConnection = HubUtility.CreateHubConnection();
 
-        _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, (message) =>
-        {
-            if (message.RoomId != _roomId)
-                return;
-
-            ViewModel.OnMessagePosted(message);
-            StateHasChanged();
-        });
-
-        _hubConnection.On<ThreadMessage>(SignalRMehod.SendThreadMessage, (message) =>
-        {
-            var thread = ViewModel.ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == message.PostId);
-            if (thread == null)
-                return;
-
-            var threadMessage = thread.Messages.Cast<ThreadMessage>().FirstOrDefault(each => each.ThreadId == message.ThreadId);
-            if (threadMessage == null)
-            {
-                thread.Messages.Add(message);
-            }
-            else
-            {
-                var index = thread.Messages.IndexOf(threadMessage);
-                if (index >= 0)
-                {
-                    thread.Messages.RemoveAt(index);
-                    thread.Messages.Insert(index, message);
-                }
-
-            }
-            StateHasChanged();
-        });
-
-        await _hubConnection.StartAsync();
+        ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+        await ViewModel.OnInitializedAsync();
     }
 
     protected override async Task OnParametersSetAsync()
