@@ -14,6 +14,8 @@ namespace ChatApp.Client.Models
 
         public Guid ThreadId { get; set; }
 
+        public Guid PostId { get; set; }
+
         public string MessageContext { get; set; }
 
         public DateTime CreateDate { get; set; }

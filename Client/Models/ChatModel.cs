@@ -23,15 +23,11 @@ namespace ChatApp.Client.Models
 
         public Guid RoomId { get; private set; }
 
-        public event EventHandler<List<UserInformation>> RoomParticipantsChanged;
+        public event EventHandler<UserInformation[]> RoomParticipantsChanged;
 
-        public event EventHandler<List<PostModel>> PostsChanged;
+        public event EventHandler<PostModel[]> PostsChanged;
 
-        public event EventHandler<PostModel> PostChanged;
-
-        public event EventHandler<List<ThreadModel>> ThreadsChanged;
-
-        public event EventHandler<ThreadModel> ThreadChanged;
+        public event EventHandler<ThreadModel[]> ThreadsChanged;
 
         private readonly HttpClient _httpClient;
 
@@ -77,6 +73,7 @@ namespace ChatApp.Client.Models
                             UserEmail = threadMessage.UserEmail,
                             HandleName = threadMessage.HandleName,
                             ThreadId = threadMessage.ThreadId,
+                            PostId = threadMessage.PostId,
                             MessageContext = threadMessage.MessageContext,
                             CreateDate = threadMessage.CreateDate,
                             UpdateDate = threadMessage.UpdateDate
@@ -86,7 +83,7 @@ namespace ChatApp.Client.Models
 
                 PostModels.Add(postModel);
 
-                PostsChanged(this, PostModels);
+                PostsChanged(this, PostModels.ToArray());
             });
 
             _hubConnection.On<ThreadMessage>(SignalRMehod.SendThreadMessage, (message) =>
@@ -100,6 +97,7 @@ namespace ChatApp.Client.Models
                 var threadModel = new ThreadModel()
                 {
                     ThreadId = message.ThreadId,
+                    PostId = message.PostId,
                     UserEmail = message.UserEmail,
                     HandleName = message.HandleName,
                     MessageContext = message.MessageContext,
@@ -121,7 +119,7 @@ namespace ChatApp.Client.Models
                     }
                 }
 
-                ThreadsChanged(this, threads);
+                ThreadsChanged(this, threads.ToArray());
             });
         }
 
@@ -178,6 +176,7 @@ namespace ChatApp.Client.Models
                             UserEmail = threadMessage.UserEmail,
                             HandleName = threadMessage.HandleName,
                             ThreadId = threadMessage.ThreadId,
+                            PostId = threadMessage.PostId,
                             MessageContext = threadMessage.MessageContext,
                             CreateDate = threadMessage.CreateDate,
                             UpdateDate = threadMessage.UpdateDate
@@ -198,7 +197,7 @@ namespace ChatApp.Client.Models
             var response = await RoomUtility.AddUsersToRoom(RoomId, userEmails, _httpClient);
             RoomParticipants = response.Users;
 
-            RoomParticipantsChanged?.Invoke(this, RoomParticipants);
+            RoomParticipantsChanged?.Invoke(this, RoomParticipants.ToArray());
         }
 
         /// <summary>
@@ -211,7 +210,7 @@ namespace ChatApp.Client.Models
             var response = await RoomUtility.DeleteUserFromRoom(RoomId, userEmails, _httpClient);
             RoomParticipants = response.Users;
 
-            RoomParticipantsChanged?.Invoke(this, RoomParticipants);
+            RoomParticipantsChanged?.Invoke(this, RoomParticipants.ToArray());
         }
 
         /// <summary>
@@ -237,7 +236,7 @@ namespace ChatApp.Client.Models
 
             PostModels.Remove(deletedMessage);
 
-            PostsChanged?.Invoke(this, PostModels);
+            PostsChanged?.Invoke(this, PostModels.ToArray());
         }
 
         /// <summary>
@@ -256,7 +255,7 @@ namespace ChatApp.Client.Models
             {
                 post.MessageContext = newMessage;
 
-                PostChanged?.Invoke(this, post);
+                PostsChanged?.Invoke(this, new PostModel[] { post });
             }
         }
 
@@ -278,11 +277,13 @@ namespace ChatApp.Client.Models
                 UserEmail = threadMessage.UserEmail,
                 HandleName = threadMessage.HandleName,
                 ThreadId = threadMessage.ThreadId,
+                PostId = threadMessage.PostId,
                 MessageContext = threadMessage.MessageContext,
-                CreateDate = threadMessage.CreateDate
+                CreateDate = threadMessage.CreateDate,
+                UpdateDate = threadMessage.UpdateDate,
             });
 
-            ThreadsChanged?.Invoke(this, threads);
+            ThreadsChanged?.Invoke(this, threads.ToArray());
         }
 
         /// <summary>
@@ -300,7 +301,7 @@ namespace ChatApp.Client.Models
             var deletedThread = threads.FirstOrDefault(thread => thread.ThreadId == threadId);
             threads.Remove(deletedThread);
 
-            ThreadsChanged?.Invoke(this, threads);
+            ThreadsChanged?.Invoke(this, threads.ToArray());
         }
 
         public async Task ChangeThreadMessageAsync(ThreadMessage message)
@@ -312,7 +313,7 @@ namespace ChatApp.Client.Models
 
             thread.MessageContext = message.MessageContext;
 
-            ThreadChanged(this, thread);
+            ThreadsChanged(this, new ThreadModel[] { thread });
         }
     }
 }
