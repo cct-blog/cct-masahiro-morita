@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
 using ChatApp.Shared.Models;
 using Oniqys.Blazor.ViewModel;
+using static ChatApp.Client.Pages.Chat;
 
 namespace ChatApp.Client.ViewModel
 {
@@ -25,7 +27,7 @@ namespace ChatApp.Client.ViewModel
             set => ValueChangeProcess(ref _threadOpened, value);
         }
 
-        public ContentCollection<MessageBase> Messages { get; } = new();
+        public ContentCollection<Message> Messages { get; } = new();
 
         private string _inputText;
 

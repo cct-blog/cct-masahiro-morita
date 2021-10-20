@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
 using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
@@ -13,6 +14,9 @@ namespace ChatApp.Client.ViewModel
     public class UserListViewModel : ContentBase
     {
         private readonly Chat.IPresenter _presenter;
+
+        private readonly ChatModel _model;
+
         /// <summary>
         /// 全ユーザーと（入室中情報付き）
         /// </summary>
@@ -25,50 +29,59 @@ namespace ChatApp.Client.ViewModel
         /// </summary>
         public Guid RoomId { get => _roomId; set => ValueChangeProcess(ref _roomId, value); }
 
-        public UserListViewModel(Chat.IPresenter presenter, Guid roomId)
+        public UserListViewModel(Chat.IPresenter presenter, Guid roomId, ChatModel model)
         {
             _presenter = presenter;
             _roomId = roomId;
+            _model = model;
+
+            _model.RoomParticipantsChanged += (s, e) => RoomParticipantsChanged(e);
         }
 
         public async Task LeaveRoom()
         {
             var user = await _presenter.GetUserAsync();
-
-            await RoomUtility.DeleteUserFromRoom(RoomId, user.Id, _presenter.GetHttpClient());
-
-            _presenter.GetNavigationManager().NavigateTo("/");
+            await _model.DeleteUsersAsync(new List<string>() { user.Id });
         }
 
         public async Task AddUsers()
-        {
-            await RoomUtility.AddUsersToRoom(RoomId, Users.Where(each => each.IsEnabled && each.IsSelected).Select(each => each.Content.Email).ToList(), _presenter.GetHttpClient());
-
-            await UpdateUsers();
-        }
+            => await _model.AddUsersAsync(Users
+                .Where(each => each.IsEnabled && each.IsSelected)
+                .Select(each => each.Content.Email)
+                .ToList());
 
         public async Task UpdateUsers()
         {
-            var roomDetail = await _presenter.GetHttpClient().GetFromJsonAsync<RoomDetail>($"room/{_roomId}");
+            await _model.GetAllUserAsync();
+            await _model.GetAllRoomParticipantsAsync();
 
-            var localUsers = roomDetail.Users.Select(each => each.Email).ToHashSet();
-
-            var allUsers = await _presenter.GetHttpClient().GetFromJsonAsync<List<UserInformation>>($"user");
-
-            Users.Clear();
-            foreach (var user in allUsers.Select(each =>
-            {
-                var exist = localUsers.Contains(each.Email);
-                return new Selectable<UserInformation> { IsSelected = exist, IsEnabled = !exist, Content = each };
-            }))
-            {
-                Users.Add(user);
-            }
+            RoomParticipantsChanged(_model.RoomParticipants.ToArray());
         }
 
         public async Task OnInitializedAsync()
+            => await UpdateUsers();
+
+        public void RoomParticipantsChanged(UserInformation[] userInformations)
         {
-            await UpdateUsers();
+            var localUsers = userInformations.Select(each => each.Email).ToHashSet();
+
+            Users.Clear();
+            foreach (var user in _model.AllUser
+                .Select(each =>
+                {
+                    var exist = localUsers.Contains(each.Email);
+                    return new Selectable<UserInformation>
+                    {
+                        IsSelected = exist,
+                        IsEnabled = !exist,
+                        Content = each
+                    };
+                }))
+            {
+                Users.Add(user);
+            }
+
+            _presenter.Invalidate();
         }
     }
 }

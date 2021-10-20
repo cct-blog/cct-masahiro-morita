@@ -9,7 +9,7 @@
 @using Oniqys.Blazor.Controls;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
-@inject HttpClient HttpClient
+@inject IHttpClientFactory IHttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HubUtility HubUtility
 @attribute [Authorize]
@@ -65,19 +65,19 @@
     <AuthorizeView>
         <Authorized>
             <div class="righttab">
-                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenUserList())">
+                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => ViewModel.OpenUserList())">
                     <span class="oi oi-chat" aria-hidden="true"></span>
                 </button>
-                @if (IsOpenedUserList)
+                @if (ViewModel.IsOpenedUserList)
                 {
                     <RoomUserList DataContext="ViewModel.UserList" />
                 }
-                else if (CurrentThreadId != Guid.Empty && _currentThread != null)
+                else if (ViewModel.CurrentThreadId != Guid.Empty && ViewModel.CurrentThread != null)
                 {
                     <div class="margin">
-                        <PostItem Message="@_currentThread.ParentMessage" />
+                        <PostItem Message="@ViewModel.CurrentThread.ParentMessage" />
                     </div>
-                    <ThreadView DataContext="_currentThread" />
+                    <ThreadView DataContext="ViewModel.CurrentThread" />
                 }
             </div>
             <div class="content margin-left">
@@ -86,10 +86,10 @@
                     <div id="@poster.ParentMessage.Id" class="margin">
                         <span>
                             <PostItem Message="@poster.ParentMessage">
-                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenInnerThread(poster))">
+                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => ViewModel.OpenInnerThread(poster))">
                                     <span class="oi oi-document" aria-hidden="true"></span>
                                 </button>
-                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => OpenThread(poster.ParentMessage.Id))">
+                                <button class="col-md-auto margin btn btn-primary btn-sm" @onclick="(() => ViewModel.OpenThread(poster.ParentMessage.Id))">
                                     <span class="oi oi-arrow-right" aria-hidden="true"></span>
                                 </button>
                             </PostItem>
@@ -122,7 +122,7 @@
     {
         Task<UserInfo> GetUserAsync();
 
-        HttpClient GetHttpClient();
+        IHttpClientFactory GetHttpClientFactory();
 
         NavigationManager GetNavigationManager();
 
@@ -142,7 +142,7 @@
         return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
     }
 
-    public HttpClient GetHttpClient() => HttpClient;
+    public IHttpClientFactory GetHttpClientFactory() => IHttpClientFactory;
 
     public NavigationManager GetNavigationManager() => NavigationManager;
 
@@ -150,88 +150,15 @@
 
     public void Invalidate() => StateHasChanged();
 
-    public void SetFocus(string elementId) => _nextFocusElementId = elementId;
+    public void SetFocus(string elementId) => ViewModel.nextFocusElementId = elementId;
 
     #endregion
-
-    private string _nextFocusElementId;
-
-    private bool _isOpenedUserList;
-
-    private bool IsOpenedUserList
-    {
-        get => _isOpenedUserList;
-        set
-        {
-            if (_isOpenedUserList == value)
-                return;
-
-            _isOpenedUserList = value;
-            _currentThreadId = Guid.Empty;
-            StateHasChanged();
-        }
-    }
-
-    private Guid _currentThreadId;
-
-    private Guid CurrentThreadId
-    {
-        get => _currentThreadId;
-        set
-        {
-            if (_currentThreadId == value)
-                return;
-
-            _isOpenedUserList = false;
-            _currentThreadId = value;
-            _currentThread = ViewModel.ThreadPosters.FirstOrDefault(each => each.ParentMessage.Id == CurrentThreadId);
-            StateHasChanged();
-        }
-    }
-
-    private PostViewModel _currentThread;
 
     private HubConnection _hubConnection;
 
     private string _fragment;
 
     private Guid _roomId;
-
-    private async Task OpenThread(Guid id)
-    {
-        if (CurrentThreadId == id)
-        {
-            CurrentThreadId = Guid.Empty;
-            return;
-        }
-        else
-        {
-            CurrentThreadId = id;
-            await UpdateThread(_currentThread);
-        }
-    }
-
-    private async Task UpdateThread(PostViewModel thread)
-    {
-        thread.Messages.Clear();
-        foreach (var message in await HttpClient.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + thread.ParentMessage.Id.ToString()))
-        {
-            thread.Messages.Add(message);
-        }
-    }
-
-    private async Task OpenInnerThread(PostViewModel poster)
-    {
-        poster.ThreadOpend = !poster.ThreadOpend;
-        await UpdateThread(poster);
-
-        StateHasChanged();
-    }
-
-    private void OpenUserList()
-    {
-        IsOpenedUserList = !IsOpenedUserList;
-    }
 
     private ChatViewModel ViewModel { get; set; }
 
@@ -268,7 +195,7 @@
         await base.OnParametersSetAsync();
 
         if (string.IsNullOrEmpty(_fragment))
-            await RefreshAsync();
+            await ViewModel.RefreshAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -276,26 +203,11 @@
         await base.OnAfterRenderAsync(firstRender);
 
         NavigateToLast();
-        if (!string.IsNullOrEmpty(_nextFocusElementId))
+        if (!string.IsNullOrEmpty(ViewModel.nextFocusElementId))
         {
-            await Focus(_nextFocusElementId);
-            _nextFocusElementId = null;
+            await Focus(ViewModel.nextFocusElementId);
+            ViewModel.nextFocusElementId = null;
         }
-    }
-
-    /// <summary>
-    /// メッセージを更新します。
-    /// </summary>
-    private async Task RefreshAsync()
-    {
-        var nowDate = DateTime.Now;
-        var request = new ChatPostPostRequest() { RoomId = RoomId, NeedMessageTailDate = nowDate };
-
-        var response = await HttpClient.PostAsJsonAsync<ChatPostPostRequest>("Post", request);
-        var messages = await response.Content.ReadFromJsonAsync<List<Message>>();
-
-        foreach (var message in messages)
-            ViewModel.OnMessagePosted(message);
     }
 
     /// <summary>

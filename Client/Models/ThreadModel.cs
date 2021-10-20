@@ -8,6 +8,17 @@ namespace ChatApp.Client.Models
 {
     public class ThreadModel : ICreateAndUpdateDate
     {
+        public ThreadModel() {}
+        public ThreadModel(ThreadMessage thread)
+        {
+            UserEmail = thread.UserEmail;
+            HandleName = thread.HandleName;
+            ThreadId = thread.ThreadId;
+            PostId = thread.PostId;
+            MessageContext = thread.MessageContext;
+            CreateDate = thread.CreateDate;
+            UpdateDate = thread.UpdateDate;
+        }
         public string UserEmail { get; set; }
 
         public string HandleName { get; set; }
