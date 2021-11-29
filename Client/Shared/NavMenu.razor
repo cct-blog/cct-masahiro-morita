@@ -3,6 +3,7 @@
 @using ChatApp.Client.Models
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Authorization
+@using ChatApp.Client.ViewModel;
 @inject NavigationManager NavigationManager
 @inject HubUtility HubUtility
 @inject IHttpClientFactory IHttpClientFactory
@@ -35,13 +36,19 @@
         <AuthorizeView>
             <Authorized>
                 <li class="nav-item px-3">@_mentionMessage</li>
-                @foreach (var room in indexModel.RoomModels)
+                @if (indexViewModel is null)
                 {
-                    <li class="nav-item px-3">
-                        <NavLink class="nav-link" href=@("chat/" + room.RoomId) Match="NavLinkMatch.All">
-                            <span class="oi oi-document" aria-hidden="true"></span>@room.RoomName
-                        </NavLink>
-                    </li>
+                }
+                else
+                {
+                    @foreach (var room in indexViewModel.Rooms)
+                    {
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href=@("chat/" + room.RoomId) Match="NavLinkMatch.All">
+                                <span class="oi oi-document" aria-hidden="true"></span>@room.RoomName
+                            </NavLink>
+                        </li>
+                    }
                 }
             </Authorized>
         </AuthorizeView>
@@ -57,10 +64,11 @@
 
     private string _mentionMessage;
 
-    private IndexModel indexModel;
-
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    [CascadingParameter]
+    protected IndexViewModel indexViewModel { get; set; }
 
     private void ToggleNavMenu()
     {
@@ -69,17 +77,6 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var authState = await authenticationStateTask;
-
-        if (authState.User.Identity.IsAuthenticated)
-        {
-            indexModel = new IndexModel(IHttpClientFactory);
-
-            await indexModel.GetUserBelongedRoomsAsync();
-
-            StateHasChanged();
-        }
-
         _hubConnection = HubUtility.CreateHubConnection();
 
         _hubConnection.On<string>(SignalRMehod.SendMention, (string content) =>
@@ -91,11 +88,8 @@
         await _hubConnection.StartAsync();
     }
 
-    public void OnRoomsChanged(Object sender, List<RoomModel> e) => StateHasChanged();
-
     public void Dispose()
     {
-        indexModel.RoomListChanged -= OnRoomsChanged;
         _ = _hubConnection.DisposeAsync();
     }
 }

@@ -128,6 +128,8 @@
 
         HubConnection GetHabConnection();
 
+        IndexViewModel GetIndexViewModel();
+
         void Invalidate();
 
         void NavigateToLast();
@@ -148,9 +150,11 @@
 
     public HubConnection GetHabConnection() => _hubConnection;
 
+    public IndexViewModel GetIndexViewModel() => indexViewModel;
+
     public void Invalidate() => StateHasChanged();
 
-    public void SetFocus(string elementId) => ViewModel.nextFocusElementId = elementId;
+    public void SetFocus(string elementId) => ViewModel.NextFocusElementId = elementId;
 
     #endregion
 
@@ -173,21 +177,34 @@
 
             _roomId = value;
             _hubConnection = HubUtility.CreateHubConnection();
-            ViewModel ??= new ChatViewModel(this as IPresenter, _roomId);
-            ViewModel.ThreadPosters.Clear();
-            ViewModel.RoomId = _roomId;
+            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
             _fragment = null;
         }
     }
 
+    private IndexViewModel _indexViewModel;
+
+    [CascadingParameter]
+    public IndexViewModel indexViewModel
+    {
+        get => _indexViewModel;
+        set
+        {
+            if (_indexViewModel != value)
+            {
+                _indexViewModel = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+
     public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        _hubConnection = HubUtility.CreateHubConnection();
-
-        ViewModel = new ChatViewModel(this as IPresenter, _roomId);
-        await ViewModel.OnInitializedAsync();
+        if (ViewModel is null)
+            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -203,10 +220,10 @@
         await base.OnAfterRenderAsync(firstRender);
 
         NavigateToLast();
-        if (!string.IsNullOrEmpty(ViewModel.nextFocusElementId))
+        if (!string.IsNullOrEmpty(ViewModel.NextFocusElementId))
         {
-            await Focus(ViewModel.nextFocusElementId);
-            ViewModel.nextFocusElementId = null;
+            await Focus(ViewModel.NextFocusElementId);
+            ViewModel.NextFocusElementId = null;
         }
     }
 

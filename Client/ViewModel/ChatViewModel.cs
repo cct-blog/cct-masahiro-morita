@@ -14,6 +14,8 @@ namespace ChatApp.Client.ViewModel
     {
         private readonly ChatModel _model;
 
+        private readonly IndexViewModel _indexViewModel;
+
         private Guid _roomId;
 
         public Guid RoomId
@@ -22,6 +24,7 @@ namespace ChatApp.Client.ViewModel
             set
             {
                 Task.Run(async () => await _model.UpdateRoomModelAsync(value));
+                UserList.RoomId = value;
                 ValueChangeProcess(ref _roomId, value);
             }
         }
@@ -73,6 +76,7 @@ namespace ChatApp.Client.ViewModel
             _roomId = roomId;
             _presenter = presenter;
             _model = new ChatModel(_presenter.GetHttpClientFactory(), _presenter.GetHabConnection(), roomId);
+            _indexViewModel = presenter.GetIndexViewModel();
 
             UserList = new(presenter, roomId, _model);
 
@@ -94,12 +98,7 @@ namespace ChatApp.Client.ViewModel
             _roomId = roomId;
             UserList = new(_presenter, roomId, _model);
             ThreadPosters.Clear();
-            await UserList.OnInitializedAsync();
-        }
-
-        public async Task OnInitializedAsync()
-        {
-            await UserList.OnInitializedAsync();
+            await UserList.UpdateUsers();
         }
 
         /// <summary>
@@ -214,7 +213,7 @@ namespace ChatApp.Client.ViewModel
         public async Task RefreshAsync()
             => await _model.GetRoomPostsAsync();
 
-        public string nextFocusElementId { get; set; }
+        public string NextFocusElementId { get; set; }
 
         private bool _isOpenedUserList;
 

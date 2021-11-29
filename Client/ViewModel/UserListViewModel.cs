@@ -27,23 +27,52 @@ namespace ChatApp.Client.ViewModel
         /// <summary>
         /// チャットルームID
         /// </summary>
-        public Guid RoomId { get => _roomId; set => ValueChangeProcess(ref _roomId, value); }
+        public Guid RoomId
+        {
+            get => _roomId;
+            set
+            {
+                Task.Run(async () => await _model.GetAllRoomParticipantsAsync());
+                ValueChangeProcess(ref _roomId, value);
+            }
+        }
+
+        private string _userEmail;
+
+        public string UserEmail
+        {
+            get => _userEmail;
+            set
+            {
+                _userEmail = value;
+                _presenter.Invalidate();
+            }
+        }
 
         public UserListViewModel(Chat.IPresenter presenter, Guid roomId, ChatModel model)
         {
             _presenter = presenter;
-            _roomId = roomId;
-            _model = model;
 
+            _model = model;
+            // roomIdの更新によってイベントハンドラーが呼ばれる前に設定する
             _model.RoomParticipantsChanged += (s, e) => RoomParticipantsChanged(e);
+
+            _roomId = roomId;
+            _userEmail = _presenter.GetUserAsync().Result.Id;
         }
 
+        // 画面のボタンクリックで参照
         public async Task LeaveRoom()
         {
             var user = await _presenter.GetUserAsync();
             await _model.DeleteUsersAsync(new List<string>() { user.Id });
+
+            await _presenter.GetIndexViewModel().UpdateRoomList();
+
+            _presenter.GetNavigationManager().NavigateTo("/");
         }
 
+        // 画面のボタンクリックで参照
         public async Task AddUsers()
             => await _model.AddUsersAsync(Users
                 .Where(each => each.IsEnabled && each.IsSelected)
@@ -52,33 +81,33 @@ namespace ChatApp.Client.ViewModel
 
         public async Task UpdateUsers()
         {
-            await _model.GetAllUserAsync();
+            _model.GetAllUserAsync().Wait();
             await _model.GetAllRoomParticipantsAsync();
-
-            RoomParticipantsChanged(_model.RoomParticipants.ToArray());
         }
-
-        public async Task OnInitializedAsync()
-            => await UpdateUsers();
 
         public void RoomParticipantsChanged(UserInformation[] userInformations)
         {
-            var localUsers = userInformations.Select(each => each.Email).ToHashSet();
-
-            Users.Clear();
-            foreach (var user in _model.AllUser
-                .Select(each =>
-                {
-                    var exist = localUsers.Contains(each.Email);
-                    return new Selectable<UserInformation>
-                    {
-                        IsSelected = exist,
-                        IsEnabled = !exist,
-                        Content = each
-                    };
-                }))
+            foreach (var user in _model.AllUser)
             {
-                Users.Add(user);
+                var matchedUser = Users.FirstOrDefault(each => each.Content.Email == user.Email);
+
+                var isParticipate = (userInformations.FirstOrDefault(each => each.Email == user.Email) is null) ?
+                    false : true;
+
+                if (matchedUser is null)
+                {
+                    Users.Add(new Selectable<UserInformation>
+                    {
+                        IsSelected = isParticipate,
+                        IsEnabled = !isParticipate,
+                        Content = user
+                    });
+                }
+                else if (matchedUser.IsSelected != isParticipate)
+                {
+                    matchedUser.IsSelected = isParticipate;
+                    matchedUser.IsEnabled = !isParticipate;
+                }
             }
 
             _presenter.Invalidate();

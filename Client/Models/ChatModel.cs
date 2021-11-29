@@ -154,6 +154,8 @@ namespace ChatApp.Client.Models
             var roomDetail = await client.GetFromJsonAsync<RoomDetail>($"Room/{RoomId}");
 
             RoomParticipants = roomDetail.Users;
+
+            RoomParticipantsChanged?.Invoke(this, RoomParticipants.ToArray());
         }
 
         /// <summary>
@@ -171,6 +173,7 @@ namespace ChatApp.Client.Models
 
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             var response = await client.PostAsJsonAsync("Post", request);
+            if (response.StatusCode != System.Net.HttpStatusCode.OK) return;
             var messages = await response.Content.ReadFromJsonAsync<List<Message>>();
 
             var postModelTask = await Task.WhenAll(messages.Select(async message =>
