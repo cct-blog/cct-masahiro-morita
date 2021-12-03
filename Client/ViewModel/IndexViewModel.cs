@@ -18,6 +18,8 @@ namespace ChatApp.Client.ViewModel
 
         public IndexViewModel(IIndexPresenter presenter)
         {
+            if (presenter is null) return;
+
             _presenter = presenter;
             _model = new IndexModel(_presenter.GetHttpClientFactory());
 

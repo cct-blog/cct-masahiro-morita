@@ -164,7 +164,7 @@
 
     private Guid _roomId;
 
-    private ChatViewModel ViewModel { get; set; }
+    private ChatViewModel ViewModel { get; set; } = new(null, Guid.Empty);
 
     [Parameter]
     public Guid RoomId

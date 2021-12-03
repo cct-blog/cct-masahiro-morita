@@ -73,6 +73,13 @@ namespace ChatApp.Client.ViewModel
 
         public ChatViewModel(Chat.IPresenter presenter, Guid roomId)
         {
+            if (presenter is null || roomId == Guid.Empty)
+            {
+                UserList = new(null, Guid.Empty, null);
+                MessagePoster = new(null, SendMessage, null);
+                return;
+            }
+
             _roomId = roomId;
             _presenter = presenter;
             _model = new ChatModel(_presenter.GetHttpClientFactory(), _presenter.GetHabConnection(), roomId);
@@ -80,9 +87,12 @@ namespace ChatApp.Client.ViewModel
 
             UserList = new(presenter, roomId, _model);
 
-            var user = _presenter.GetUserAsync().Result;
-            _userEmail = user.Id;
-            _handleName = user.Name;
+            Task.Run(async () =>
+            {
+                var user = await _presenter.GetUserAsync();
+                _userEmail = user.Id;
+                _handleName = user.Name;
+            });
 
             MessagePoster = new(_presenter, SendMessage, null);
 
@@ -249,7 +259,7 @@ namespace ChatApp.Client.ViewModel
             }
         }
 
-        public PostViewModel CurrentThread { get; set; }
+        public PostViewModel CurrentThread { get; set; } = new(null, null, null);
 
         public async Task OpenThread(Guid id)
         {

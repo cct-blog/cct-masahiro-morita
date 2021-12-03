@@ -51,6 +51,9 @@ namespace ChatApp.Client.ViewModel
 
         public UserListViewModel(Chat.IPresenter presenter, Guid roomId, ChatModel model)
         {
+            if (presenter is null || roomId == Guid.Empty || model == null)
+                return;
+
             _presenter = presenter;
 
             _model = model;
@@ -58,7 +61,11 @@ namespace ChatApp.Client.ViewModel
             _model.RoomParticipantsChanged += (s, e) => RoomParticipantsChanged(e);
 
             _roomId = roomId;
-            _userEmail = _presenter.GetUserAsync().Result.Id;
+            Task.Run(async () =>
+            {
+                var user = await _presenter.GetUserAsync();
+                _userEmail = user.Id;
+            });
         }
 
         // 画面のボタンクリックで参照

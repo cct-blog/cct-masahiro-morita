@@ -35,6 +35,9 @@ namespace ChatApp.Client.ViewModel
 
         public PostViewModel(Chat.IPresenter presenter, Func<string, Task> sender, Message parentMessage)
         {
+            if (presenter is null || sender is null || parentMessage is null)
+                return;
+            
             _presenter = presenter;
 
             Messages.PropertyChanged += (s, e) => _presenter.Invalidate();
