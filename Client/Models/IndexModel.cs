@@ -10,37 +10,73 @@ namespace ChatApp.Client.Models
 {
     public class IndexModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public List<RoomModel> RoomModels { get; set; } = new List<RoomModel>();
 
-        public event EventHandler<List<RoomModel>> RoomListChanged;
+        public event EventHandler<RoomModel[]> RoomListChanged;
 
-        public IndexModel(IHttpClientFactory _httpClientFactory)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
+            _httpClientFactory = httpClientFactory;
+
+            Task.Run(async () => await GetUserBelongedRoomsAsync());
         }
 
         public async Task GetUserBelongedRoomsAsync()
         {
-            var rooms = await _httpClient.GetFromJsonAsync<List<UserRoom>>("Room");
+            var httpClient = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
 
-            RoomModels = rooms
-                .Select((room) =>
-                    new RoomModel()
+            var rooms = await httpClient.GetFromJsonAsync<List<UserRoom>>("Room");
+
+            foreach (var room in rooms)
+            {
+                var matchedRoom = RoomModels.FirstOrDefault(each => each.RoomId == room.Id);
+
+                if (matchedRoom is null)
+                {
+                    RoomModels.Add(new RoomModel()
                     {
                         RoomId = room.Id,
                         RoomName = room.Name,
                         LastAccessDate = room.LastAccessDate
-                    })
-                .ToList();
+                    });
+                }
+                else
+                {
+                    matchedRoom = new RoomModel()
+                    {
+                        RoomId = room.Id,
+                        RoomName = room.Name,
+                        LastAccessDate = room.LastAccessDate
+                    };
+                }
+            }
 
-            RoomListChanged?.Invoke(this, RoomModels);
+            List<RoomModel> toBeDeletedRoomModels = new();
+            foreach (var roomModel in RoomModels)
+            {
+                var matchedRoom = rooms.FirstOrDefault(each => each.Id == roomModel.RoomId);
+
+                if (matchedRoom is null) toBeDeletedRoomModels.Add(roomModel);
+            }
+
+            if (toBeDeletedRoomModels.Any())
+            {
+                foreach (var toBeDeletedRoomModel in toBeDeletedRoomModels)
+                {
+                    RoomModels.Remove(toBeDeletedRoomModel);
+                }
+            }
+
+            RoomListChanged?.Invoke(this, RoomModels.ToArray());
         }
 
         public async Task CreateRoomAsync(string roomName, List<string> userEmails)
         {
-            await _httpClient.PostAsJsonAsync(
+            var httpClient = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
+
+            await httpClient.PostAsJsonAsync(
                 "Room",
                 new CreateRoom() { RoomName = roomName, UserIds = userEmails });
 

@@ -79,7 +79,6 @@ namespace ChatApp.Server.Services
                 })
                 .ToArrayAsync();
 
-        //TODO: メンションの処理を入れる。
         internal async Task<Guid> CreateThread(ThreadMessage message, string userId)
         {
             var threadId = Guid.NewGuid();

@@ -3,6 +3,7 @@
 @using ChatApp.Client.Services
 @using ChatApp.Client.Models
 @using Oniqys.Blazor.ViewModel
+@using ChatApp.Client.ViewModel;
 @inject NavigationManager NavigationManager
 @inject IHttpClientFactory IHttpClientFactory
 @inject IRoomManager RoomManager
@@ -24,11 +25,11 @@
         <Authorized>
             <div class="margin8">
                 @{ userEmail = context.User.Identity.Name;}
-                @if (indexModel.RoomModels is null)
+                @if (indexViewModel?.Rooms is null)
                 {
                     <div>ルームを読み取り中…</div>
                 }
-                else if (indexModel.RoomModels.Count == 0)
+                else if (indexViewModel.Rooms.Count == 0)
                 {
                 }
                 else
@@ -37,7 +38,7 @@
                         <span class="navbar-brand mb-0 h1 text-white-50">チャットルームを選択してください</span>
                     </nav>
                     <div class="d-flex flex-wrap">
-                        @foreach (var room in indexModel.RoomModels)
+                        @foreach (var room in indexViewModel.Rooms)
                         {
                             <NavLink class="btn btn-secondary margin8" href=@("chat/" + room.RoomId)>
                                 <span class="oi oi-document" aria-hidden="true"></span>@room.RoomName
@@ -49,7 +50,7 @@
 
                 <div class="d-flex flex-wrap">
                     <input class="margin8" type="text" @bind="newRoomName" />
-                    <button class="btn btn-primary" @onclick="CreateRoomAsync">新規ルーム作成</button>
+                    <button class="btn btn-primary" @onclick="() => indexViewModel.CreateRoomAsync(newRoomName,new List<string> { userEmail })">新規ルーム作成</button>
                 </div>
             </div>
         </Authorized>
@@ -63,35 +64,7 @@
 
     private string userEmail;
 
-    private IndexModel indexModel;
+    [CascadingParameter]
+    protected IndexViewModel indexViewModel { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-
-        indexModel = new IndexModel(IHttpClientFactory);
-
-        indexModel.RoomListChanged += ChangeRoomsEvent;
-
-        await indexModel.GetUserBelongedRoomsAsync();
-
-        StateHasChanged();
-    }
-
-    private void ChangeRoomsEvent(Object sender, List<RoomModel> e)
-    {
-        if (e.Equals(indexModel.RoomModels))
-        {
-            StateHasChanged();
-        }
-    }
-
-    private async Task CreateRoomAsync()
-    {
-        if (!CanCareateNewRoom)
-            return;
-
-        await indexModel.CreateRoomAsync(newRoomName, new List<string> { userEmail });
-    }
-
-    public void Dispose() => indexModel.RoomListChanged -= ChangeRoomsEvent;
 }
