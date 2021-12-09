@@ -12,6 +12,8 @@
 @inject IHttpClientFactory IHttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HubUtility HubUtility
+@inject ChatViewModel ViewModel
+
 @attribute [Authorize]
 @implements IDisposable
 @implements Chat.IPresenter
@@ -122,8 +124,6 @@
     {
         Task<UserInfo> GetUserAsync();
 
-        IHttpClientFactory GetHttpClientFactory();
-
         NavigationManager GetNavigationManager();
 
         HubConnection GetHabConnection();
@@ -144,8 +144,6 @@
         return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
     }
 
-    public IHttpClientFactory GetHttpClientFactory() => IHttpClientFactory;
-
     public NavigationManager GetNavigationManager() => NavigationManager;
 
     public HubConnection GetHabConnection() => _hubConnection;
@@ -164,8 +162,6 @@
 
     private Guid _roomId;
 
-    private ChatViewModel ViewModel { get; set; } = new(null, Guid.Empty);
-
     [Parameter]
     public Guid RoomId
     {
@@ -177,8 +173,6 @@
 
             _roomId = value;
             _hubConnection = HubUtility.CreateHubConnection();
-            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
-            _fragment = null;
         }
     }
 
@@ -201,15 +195,17 @@
 
     public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        if (ViewModel is null)
-            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+        await ViewModel.InitializeAsync(this, _roomId);
     }
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
+
+        _fragment = null;
+        await ViewModel.InitializeAsync(this as IPresenter, _roomId);
 
         if (string.IsNullOrEmpty(_fragment))
             await ViewModel.RefreshAsync();

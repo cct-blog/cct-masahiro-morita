@@ -1,7 +1,8 @@
 ﻿@using ChatApp.Client.ViewModel;
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IHttpClientFactory IHttpClientFactory
+@inject IHttpClientFactory HttpClientFactory
+@inject IndexViewModel ViewModel
 @implements MainLayout.IIndexPresenter
 
 <style type="text/css">
@@ -37,7 +38,7 @@
 <div class="app-layout">
     <div class="teams"></div>
     <div class="sidebar">
-        <CascadingValue Value="viewModel">
+        <CascadingValue Value="ViewModel">
             <NavMenu />
         </CascadingValue>
     </div>
@@ -45,7 +46,7 @@
         <LoginDisplay />
     </div>
     <div class="body">
-        <CascadingValue Value="viewModel">
+        <CascadingValue Value="ViewModel">
             @Body
         </CascadingValue>
     </div>
@@ -55,24 +56,13 @@
 
     public interface IIndexPresenter
     {
-        Task<string> GetUserIdAsync();
-
-        IHttpClientFactory GetHttpClientFactory();
-
         void Invalidate();
     }
 
-    public async Task<string> GetUserIdAsync()
-        => (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.Identity.Name;
-
-    public IHttpClientFactory GetHttpClientFactory() => IHttpClientFactory;
-
     public void Invalidate() => StateHasChanged();
 
-    private IndexViewModel viewModel { get; set; }
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        viewModel = new((IIndexPresenter)this);
+        await ViewModel.InitializeAsync(this);
     }
 }

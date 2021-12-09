@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
 using ChatApp.Shared.Models;
+using Microsoft.AspNetCore.Components;
 using Oniqys.Blazor.ViewModel;
 
 namespace ChatApp.Client.ViewModel
 {
     public class ChatViewModel : ContentBase
     {
-        private readonly ChatModel _model;
+        private ChatModel _model;
 
-        private readonly IndexViewModel _indexViewModel;
+        private IndexViewModel _indexViewModel;
 
         private Guid _roomId;
 
@@ -53,7 +55,7 @@ namespace ChatApp.Client.ViewModel
             }
         }
 
-        private readonly Chat.IPresenter _presenter;
+        private Chat.IPresenter _presenter;
 
         public UserListViewModel UserList { get; set; }
 
@@ -65,13 +67,20 @@ namespace ChatApp.Client.ViewModel
         /// <summary>
         /// 親メッセージを投稿するためのViewModel
         /// </summary>
-        public PostViewModel MessagePoster { get; }
+        public PostViewModel MessagePoster { get; private set; }
 
         public Selectable UserListTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
         public Selectable ThreadTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
-        public ChatViewModel(Chat.IPresenter presenter, Guid roomId)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public ChatViewModel(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
+
+        public async Task InitializeAsync(Chat.IPresenter presenter, Guid roomId)
         {
             if (presenter is null || roomId == Guid.Empty)
             {
@@ -82,12 +91,12 @@ namespace ChatApp.Client.ViewModel
 
             _roomId = roomId;
             _presenter = presenter;
-            _model = new ChatModel(_presenter.GetHttpClientFactory(), _presenter.GetHabConnection(), roomId);
+            _model = new ChatModel(_httpClientFactory, _presenter.GetHabConnection(), roomId);
             _indexViewModel = presenter.GetIndexViewModel();
 
             UserList = new(presenter, roomId, _model);
 
-            Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 var user = await _presenter.GetUserAsync();
                 _userEmail = user.Id;

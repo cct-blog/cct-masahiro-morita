@@ -1,5 +1,6 @@
 using ChatApp.Client.Models;
 using ChatApp.Client.Services;
+using ChatApp.Client.ViewModel;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,10 @@ namespace ChatApp.Client
             builder.Services.AddApiAuthorization();
 
             builder.Services.AddSingleton<IRoomManager, RoomManager>();
+
+            builder.Services.AddSingleton<IndexModel>();
+            builder.Services.AddTransient<IndexViewModel>();
+            builder.Services.AddTransient<ChatViewModel>();
 
             await builder.Build().RunAsync();
         }

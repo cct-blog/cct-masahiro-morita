@@ -14,15 +14,20 @@ namespace ChatApp.Client.ViewModel
 
         public ContentCollection<RoomModel> Rooms = new();
 
-        private readonly IIndexPresenter _presenter;
+        private IIndexPresenter _presenter;
 
-        public IndexViewModel(IIndexPresenter presenter)
+        public IndexViewModel(IndexModel indexModel)
+        {
+            _model = indexModel;
+        }
+
+        public async Task InitializeAsync(IIndexPresenter presenter)
         {
             if (presenter is null) return;
 
             _presenter = presenter;
-            _model = new IndexModel(_presenter.GetHttpClientFactory());
 
+            await _model.InitializeAsync();
             _model.RoomListChanged += (s, e) => OnRoomChanged(e);
         }
 
