@@ -12,23 +12,41 @@ namespace ChatApp.Client.ViewModel
     {
         private readonly IndexModel _model;
 
-        public ContentCollection<RoomModel> Rooms = new();
+        public ContentCollection<RoomModel> Rooms { get; } = new();
 
         private IIndexPresenter _presenter;
+
+        private bool _isLoggedIn;
+
+        /// <summary>
+        /// ログイン状態
+        /// </summary>
+        public bool IsLoggedIn
+        {
+            get => _isLoggedIn;
+            set
+            {
+                if (ValueChangeProcess(ref _isLoggedIn, value) && value)
+                {
+                    Initialize(_presenter);
+                }
+            }
+        }
 
         public IndexViewModel(IndexModel indexModel)
         {
             _model = indexModel;
         }
 
-        public async Task InitializeAsync(IIndexPresenter presenter)
+        public void Initialize(IIndexPresenter presenter)
         {
-            if (presenter is null) return;
-
             _presenter = presenter;
 
-            await _model.InitializeAsync();
-            _model.RoomListChanged += (s, e) => OnRoomChanged(e);
+            // 同期処理内で非同期処理を管理する手法。
+            Task initialized = Task.CompletedTask;
+
+            _model.RoomListChanged += async (s, e) => { await initialized; OnRoomChanged(e); };
+            initialized = _model.Initialize();
         }
 
         private void OnRoomChanged(RoomModel[] rooms)

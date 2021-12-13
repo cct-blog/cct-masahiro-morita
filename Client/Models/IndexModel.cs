@@ -21,63 +21,58 @@ namespace ChatApp.Client.Models
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task InitializeAsync()
+        public Task Initialize()
         {
-            await GetUserBelongedRoomsAsync();
+            return GetUserBelongedRoomsAsync();
         }
 
         public async Task GetUserBelongedRoomsAsync()
         {
             var httpClient = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
 
-            try
+            var rooms = await httpClient.GetFromJsonAsync<List<UserRoom>>("Room");
+
+            foreach (var room in rooms)
             {
-                var rooms = await httpClient.GetFromJsonAsync<List<UserRoom>>("Room");
+                var matchedRoom = RoomModels.FirstOrDefault(each => each.RoomId == room.Id);
 
-                foreach (var room in rooms)
+                if (matchedRoom is null)
                 {
-                    var matchedRoom = RoomModels.FirstOrDefault(each => each.RoomId == room.Id);
-
-                    if (matchedRoom is null)
+                    RoomModels.Add(new RoomModel()
                     {
-                        RoomModels.Add(new RoomModel()
-                        {
-                            RoomId = room.Id,
-                            RoomName = room.Name,
-                            LastAccessDate = room.LastAccessDate
-                        });
-                    }
-                    else
-                    {
-                        matchedRoom = new RoomModel()
-                        {
-                            RoomId = room.Id,
-                            RoomName = room.Name,
-                            LastAccessDate = room.LastAccessDate
-                        };
-                    }
+                        RoomId = room.Id,
+                        RoomName = room.Name,
+                        LastAccessDate = room.LastAccessDate
+                    });
                 }
-
-                List<RoomModel> toBeDeletedRoomModels = new();
-                foreach (var roomModel in RoomModels)
+                else
                 {
-                    var matchedRoom = rooms.FirstOrDefault(each => each.Id == roomModel.RoomId);
-
-                    if (matchedRoom is null) toBeDeletedRoomModels.Add(roomModel);
-                }
-
-                if (toBeDeletedRoomModels.Any())
-                {
-                    foreach (var toBeDeletedRoomModel in toBeDeletedRoomModels)
+                    matchedRoom = new RoomModel()
                     {
-                        RoomModels.Remove(toBeDeletedRoomModel);
-                    }
+                        RoomId = room.Id,
+                        RoomName = room.Name,
+                        LastAccessDate = room.LastAccessDate
+                    };
                 }
-
-                RoomListChanged?.Invoke(this, RoomModels.ToArray());
             }
-            // TODO : 例外の種類をハッキリと指摘する必要がある
-            catch { }
+
+            List<RoomModel> toBeDeletedRoomModels = new();
+            foreach (var roomModel in RoomModels)
+            {
+                var matchedRoom = rooms.FirstOrDefault(each => each.Id == roomModel.RoomId);
+
+                if (matchedRoom is null) toBeDeletedRoomModels.Add(roomModel);
+            }
+
+            if (toBeDeletedRoomModels.Any())
+            {
+                foreach (var toBeDeletedRoomModel in toBeDeletedRoomModels)
+                {
+                    RoomModels.Remove(toBeDeletedRoomModel);
+                }
+            }
+
+            RoomListChanged?.Invoke(this, RoomModels.ToArray());
         }
 
         public async Task CreateRoomAsync(string roomName, List<string> userEmails)
