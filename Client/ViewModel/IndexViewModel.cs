@@ -28,7 +28,7 @@ namespace ChatApp.Client.ViewModel
             {
                 if (ValueChangeProcess(ref _isLoggedIn, value) && value)
                 {
-                    Initialize(_presenter);
+                    InitializeRoomList();
                 }
             }
         }
@@ -41,7 +41,10 @@ namespace ChatApp.Client.ViewModel
         public void Initialize(IIndexPresenter presenter)
         {
             _presenter = presenter;
+        }
 
+        private void InitializeRoomList()
+        {
             // 同期処理内で非同期処理を管理する手法。
             Task initialized = Task.CompletedTask;
 
