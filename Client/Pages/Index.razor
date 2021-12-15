@@ -24,7 +24,10 @@
     <AuthorizeView>
         <Authorized>
             <div class="margin8">
-                @{ userEmail = context.User.Identity.Name;}
+                @{
+                    userEmail = context.User.Identity.Name;
+                    indexViewModel.IsLoggedIn = true;
+                }
                 @if (indexViewModel?.Rooms is null)
                 {
                     <div>ルームを読み取り中…</div>

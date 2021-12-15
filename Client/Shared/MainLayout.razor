@@ -61,8 +61,8 @@
 
     public void Invalidate() => StateHasChanged();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await ViewModel.InitializeAsync(this);
+        ViewModel.Initialize(this);
     }
 }
