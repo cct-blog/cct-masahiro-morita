@@ -14,10 +14,7 @@ namespace ChatApp.Client.ViewModel
 
         public ContentCollection<RoomModel> Rooms { get; } = new();
 
-        private IIndexPresenter _presenter;
-
         private bool _isLoggedIn;
-
         /// <summary>
         /// ログイン状態
         /// </summary>
@@ -36,11 +33,6 @@ namespace ChatApp.Client.ViewModel
         public IndexViewModel(IndexModel indexModel)
         {
             _model = indexModel;
-        }
-
-        public void Initialize(IIndexPresenter presenter)
-        {
-            _presenter = presenter;
         }
 
         private void InitializeRoomList()
@@ -82,7 +74,7 @@ namespace ChatApp.Client.ViewModel
                 Rooms.Add(target);
             }
 
-            _presenter.Invalidate();
+            OnPropertyChanged(nameof(Rooms));
         }
 
         public async Task CreateRoomAsync(string roomName, List<string> userEmails)

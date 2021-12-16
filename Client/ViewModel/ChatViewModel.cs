@@ -16,8 +16,6 @@ namespace ChatApp.Client.ViewModel
     {
         private ChatModel _model;
 
-        private IndexViewModel _indexViewModel;
-
         private Guid _roomId;
 
         public Guid RoomId
@@ -92,7 +90,6 @@ namespace ChatApp.Client.ViewModel
             _roomId = roomId;
             _presenter = presenter;
             _model = new ChatModel(_httpClientFactory, _presenter.GetHabConnection(), roomId);
-            _indexViewModel = presenter.GetIndexViewModel();
 
             UserList = new(presenter, roomId, _model);
 
