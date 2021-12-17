@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
+using Microsoft.AspNetCore.Components.Authorization;
 using Oniqys.Blazor.ViewModel;
 using static ChatApp.Client.Shared.MainLayout;
 
@@ -13,6 +14,8 @@ namespace ChatApp.Client.ViewModel
         private readonly IndexModel _model;
 
         public ContentCollection<RoomModel> Rooms { get; } = new();
+
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
 
         private bool _isLoggedIn;
         /// <summary>
@@ -30,9 +33,10 @@ namespace ChatApp.Client.ViewModel
             }
         }
 
-        public IndexViewModel(IndexModel indexModel)
+        public IndexViewModel(IndexModel indexModel, AuthenticationStateProvider authenticationStateProvider)
         {
             _model = indexModel;
+            _authenticationStateProvider = authenticationStateProvider;
         }
 
         private void InitializeRoomList()
@@ -41,7 +45,7 @@ namespace ChatApp.Client.ViewModel
             Task initialized = Task.CompletedTask;
 
             _model.RoomListChanged += async (s, e) => { await initialized; OnRoomChanged(e); };
-            initialized = _model.Initialize();
+            initialized = _model.Initialize(_authenticationStateProvider);
         }
 
         private void OnRoomChanged(RoomModel[] rooms)
@@ -78,9 +82,6 @@ namespace ChatApp.Client.ViewModel
         }
 
         public async Task CreateRoomAsync(string roomName, List<string> userEmails)
-            => await _model.CreateRoomAsync(roomName, userEmails);
-
-        public async Task UpdateRoomList()
-            => await _model.GetUserBelongedRoomsAsync();
+            => await _model.CreateRoomAsync(roomName, userEmails, _authenticationStateProvider);
     }
 }

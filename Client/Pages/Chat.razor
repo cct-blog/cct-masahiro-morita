@@ -120,8 +120,6 @@
 
     public interface IPresenter
     {
-        Task<UserInfo> GetUserAsync();
-
         NavigationManager GetNavigationManager();
 
         IndexViewModel GetIndexViewModel();
@@ -131,13 +129,6 @@
         void NavigateToLast();
 
         void SetFocus(string elementId);
-    }
-
-    public async Task<UserInfo> GetUserAsync()
-    {
-        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
-
-        return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
     }
 
     public NavigationManager GetNavigationManager() => NavigationManager;

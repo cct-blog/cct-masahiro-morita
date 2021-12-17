@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ChatApp.Shared.Models;
+using Microsoft.AspNetCore.Components.Authorization;
+using static ChatApp.Client.Pages.Chat;
 
 namespace ChatApp.Client.Models
 {
@@ -12,21 +14,55 @@ namespace ChatApp.Client.Models
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
+        private UserInformation[] _allUsers = Array.Empty<UserInformation>();
+        // すべてのユーザー
+        public UserInformation[] AllUsers
+        { 
+            get => _allUsers;
+            private set 
+            {
+                _allUsers = value;
+                AllUserChanged?.Invoke(this, value);
+            }
+        }
+
         public List<RoomModel> RoomModels { get; set; } = new List<RoomModel>();
 
         public event EventHandler<RoomModel[]> RoomListChanged;
+
+        public event EventHandler<UserInformation[]> AllUserChanged;
+
 
         public IndexModel(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
 
-        public Task Initialize()
+        public Task Initialize(AuthenticationStateProvider authenticationStateProvider)
         {
-            return GetUserBelongedRoomsAsync();
+            return GetUserBelongedRoomsAsync(authenticationStateProvider);
         }
 
-        public async Task GetUserBelongedRoomsAsync()
+        public async Task<UserInfo> GetUserAsync(AuthenticationStateProvider authenticationStateProvider)
+        {
+            Console.WriteLine("***GetUserAsync");
+            var user = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+
+            return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
+        }
+
+        /// <summary>
+        /// サービスに登録しているすべてのユーザーを取得する
+        /// </summary>
+        /// <returns></returns>
+        public async Task GetAllUserAsync()
+        {
+            var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
+            AllUsers = (await client.GetFromJsonAsync<List<UserInformation>>("User")).ToArray();
+        }
+
+
+        public async Task GetUserBelongedRoomsAsync(AuthenticationStateProvider authenticationStateProvider)
         {
             var httpClient = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
 
@@ -75,7 +111,7 @@ namespace ChatApp.Client.Models
             RoomListChanged?.Invoke(this, RoomModels.ToArray());
         }
 
-        public async Task CreateRoomAsync(string roomName, List<string> userEmails)
+        public async Task CreateRoomAsync(string roomName, List<string> userEmails, AuthenticationStateProvider authenticationStateProvider)
         {
             var httpClient = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
 
@@ -83,7 +119,7 @@ namespace ChatApp.Client.Models
                 "Room",
                 new CreateRoom() { RoomName = roomName, UserIds = userEmails });
 
-            await GetUserBelongedRoomsAsync();
+            await GetUserBelongedRoomsAsync(authenticationStateProvider);
         }
     }
 }

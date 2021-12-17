@@ -7,6 +7,7 @@ using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
 using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
+using Microsoft.AspNetCore.Components.Authorization;
 using Oniqys.Blazor.ViewModel;
 
 namespace ChatApp.Client.ViewModel
@@ -15,7 +16,11 @@ namespace ChatApp.Client.ViewModel
     {
         private readonly Chat.IPresenter _presenter;
 
-        private readonly ChatModel _model;
+        private readonly ChatModel _chatModel;
+
+        private readonly IndexModel _indexModel;
+
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
 
         /// <summary>
         /// 全ユーザーと（入室中情報付き）
@@ -30,11 +35,16 @@ namespace ChatApp.Client.ViewModel
         public Guid RoomId
         {
             get => _roomId;
-            set
+            private set
             {
-                Task.Run(async () => await _model.GetAllRoomParticipantsAsync());
                 ValueChangeProcess(ref _roomId, value);
             }
+        }
+
+        public async Task SetRoomId(Guid roomId)
+        {
+            RoomId = roomId;
+            await _chatModel.GetAllRoomParticipantsAsync(roomId);
         }
 
         private string _userEmail;
@@ -44,26 +54,27 @@ namespace ChatApp.Client.ViewModel
             get => _userEmail;
             set
             {
-                _userEmail = value;
-                _presenter.Invalidate();
+                ObjectChangeProcess(ref _userEmail, value);
             }
         }
 
-        public UserListViewModel(Chat.IPresenter presenter, Guid roomId, ChatModel model)
+        public UserListViewModel(Chat.IPresenter presenter, Guid roomId, IndexModel indexModel, ChatModel chatModel, AuthenticationStateProvider authenticationStateProvider)
         {
-            if (presenter is null || roomId == Guid.Empty || model == null)
+            _indexModel = indexModel;
+            _presenter = presenter;
+            _authenticationStateProvider = authenticationStateProvider;
+
+            if (presenter is null || roomId == Guid.Empty || chatModel == null)
                 return;
 
-            _presenter = presenter;
-
-            _model = model;
+            _chatModel = chatModel;
             // roomIdの更新によってイベントハンドラーが呼ばれる前に設定する
-            _model.RoomParticipantsChanged += (s, e) => RoomParticipantsChanged(e);
+            _chatModel.RoomParticipantsChanged += (s, e) => RoomParticipantsChanged(e);
 
             _roomId = roomId;
             Task.Run(async () =>
             {
-                var user = await _presenter.GetUserAsync();
+                var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
                 _userEmail = user.Id;
             });
         }
@@ -71,30 +82,30 @@ namespace ChatApp.Client.ViewModel
         // 画面のボタンクリックで参照
         public async Task LeaveRoom()
         {
-            var user = await _presenter.GetUserAsync();
-            await _model.DeleteUsersAsync(new List<string>() { user.Id });
+            var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
+            await _chatModel.DeleteUsersAsync(new List<string>() { user.Id });
 
-            await _presenter.GetIndexViewModel().UpdateRoomList();
+            await _indexModel.GetUserBelongedRoomsAsync(_authenticationStateProvider);
 
             _presenter.GetNavigationManager().NavigateTo("/");
         }
 
         // 画面のボタンクリックで参照
         public async Task AddUsers()
-            => await _model.AddUsersAsync(Users
+            => await _chatModel.AddUsersAsync(Users
                 .Where(each => each.IsEnabled && each.IsSelected)
                 .Select(each => each.Content.Email)
                 .ToList());
 
         public async Task UpdateUsers()
         {
-            _model.GetAllUserAsync().Wait();
-            await _model.GetAllRoomParticipantsAsync();
+            await _indexModel.GetAllUserAsync();
+            await _chatModel.GetAllRoomParticipantsAsync(_roomId);
         }
 
         public void RoomParticipantsChanged(UserInformation[] userInformations)
         {
-            foreach (var user in _model.AllUser)
+            foreach (var user in _indexModel.AllUsers)
             {
                 var matchedUser = Users.FirstOrDefault(each => each.Content.Email == user.Email);
 
