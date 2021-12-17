@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
+using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Components;
 using Oniqys.Blazor.ViewModel;
@@ -15,6 +16,10 @@ namespace ChatApp.Client.ViewModel
     public class ChatViewModel : ContentBase
     {
         private readonly ChatModel _model;
+
+        private readonly IndexModel _indexModel;
+
+        private readonly HubUtility _hubUtility;
 
         private Guid _roomId;
 
@@ -71,12 +76,12 @@ namespace ChatApp.Client.ViewModel
 
         public Selectable ThreadTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
-        private readonly IHttpClientFactory _httpClientFactory;
-
-        public ChatViewModel(IHttpClientFactory httpClientFactory, ChatModel chatModel)
+        public ChatViewModel(IndexModel indexModel, HubUtility hubUtility)
         {
-            _httpClientFactory = httpClientFactory;
-            _model = chatModel;
+            _hubUtility = hubUtility;
+            _indexModel = indexModel;
+            _model = _indexModel.ChatModelFactory(_hubUtility);
+
             UserList = new(null, Guid.Empty, null);
             MessagePoster = new(null, SendMessage, null);
         }
