@@ -13,13 +13,13 @@ namespace ChatApp.Client.Models
 {
     public class ChatModel
     {
-        public List<PostModel> PostModels { get; set; }
+        public List<PostModel> PostModels { get; private set; }
 
         // 入室中のユーザー情報
-        public List<UserInformation> RoomParticipants { get; set; }
+        public List<UserInformation> RoomParticipants { get; private set; }
 
         // すべてのユーザー
-        public List<UserInformation> AllUser { get; set; }
+        public List<UserInformation> AllUser { get; private set; }
 
         public Guid RoomId { get; private set; }
 
@@ -42,16 +42,7 @@ namespace ChatApp.Client.Models
         public ChatModel(IHttpClientFactory httpClientFactory, HubUtility HubUtility)
         {
             _httpClientFactory = httpClientFactory;
-            _hubConnection = HubUtility.CreateHubConnection();
-        }
-
-        public async Task Initialize(Guid roomId)
-        {
-            await GetAllUserAsync();
-            await GetAllRoomParticipantsAsync();
-            await GetRoomPostsAsync();
-
-            RoomId = roomId;
+            _hubConnection = hubConnection;
 
             _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, async (message) =>
             {
@@ -122,7 +113,11 @@ namespace ChatApp.Client.Models
 
                 ThreadsChanged(this, threads.ToArray());
             });
+        }
 
+        public async Task Initialize(Guid roomId)
+        {
+            await UpdateRoomModelAsync(roomId);
             await _hubConnection.StartAsync();
         }
 
