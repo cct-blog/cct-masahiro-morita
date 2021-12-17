@@ -9,9 +9,7 @@
 @using Oniqys.Blazor.Controls;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
-@inject IHttpClientFactory IHttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject HubUtility HubUtility
 @inject ChatViewModel ViewModel
 
 @attribute [Authorize]
@@ -126,8 +124,6 @@
 
         NavigationManager GetNavigationManager();
 
-        HubConnection GetHabConnection();
-
         IndexViewModel GetIndexViewModel();
 
         void Invalidate();
@@ -146,8 +142,6 @@
 
     public NavigationManager GetNavigationManager() => NavigationManager;
 
-    public HubConnection GetHabConnection() => _hubConnection;
-
     public IndexViewModel GetIndexViewModel() => indexViewModel;
 
     public void Invalidate() => StateHasChanged();
@@ -155,8 +149,6 @@
     public void SetFocus(string elementId) => ViewModel.NextFocusElementId = elementId;
 
     #endregion
-
-    private HubConnection _hubConnection;
 
     private string _fragment;
 
@@ -194,9 +186,6 @@
             }
         }
     }
-
-
-    public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
 
     protected override async Task OnInitializedAsync()
     {
@@ -254,6 +243,5 @@
 
     public void Dispose()
     {
-        _ = _hubConnection.DisposeAsync();
     }
 }

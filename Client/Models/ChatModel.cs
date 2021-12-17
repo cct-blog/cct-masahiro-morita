@@ -39,10 +39,10 @@ namespace ChatApp.Client.Models
         /// <param name="httpClientFactory"></param>
         /// <param name="hubConnection"></param>
         /// <param name="roomId"></param>
-        public ChatModel(IHttpClientFactory httpClientFactory, HubConnection hubConnection)
+        public ChatModel(IHttpClientFactory httpClientFactory, HubUtility HubUtility)
         {
             _httpClientFactory = httpClientFactory;
-            _hubConnection = hubConnection;
+            _hubConnection = HubUtility.CreateHubConnection();
         }
 
         public async Task Initialize(Guid roomId)

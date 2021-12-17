@@ -14,8 +14,7 @@ namespace ChatApp.Client.ViewModel
 {
     public class ChatViewModel : ContentBase
     {
-        private ChatModel _model;
-
+        private readonly ChatModel _model;
 
         private Guid _roomId;
 
@@ -74,9 +73,10 @@ namespace ChatApp.Client.ViewModel
 
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public ChatViewModel(IHttpClientFactory httpClientFactory)
+        public ChatViewModel(IHttpClientFactory httpClientFactory, ChatModel chatModel)
         {
             _httpClientFactory = httpClientFactory;
+            _model = chatModel;
             UserList = new(null, Guid.Empty, null);
             MessagePoster = new(null, SendMessage, null);
         }
@@ -92,7 +92,6 @@ namespace ChatApp.Client.ViewModel
 
             _roomId = roomId;
             _presenter = presenter;
-            _model = new ChatModel(_httpClientFactory, _presenter.GetHabConnection());
             await _model.Initialize(roomId);
 
             UserList = new(presenter, roomId, _model);
