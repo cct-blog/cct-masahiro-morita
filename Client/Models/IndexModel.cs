@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using static ChatApp.Client.Pages.Chat;
@@ -25,6 +26,8 @@ namespace ChatApp.Client.Models
                 AllUserChanged?.Invoke(this, value);
             }
         }
+
+        private ChatModel _chatModel;
 
         public List<RoomModel> RoomModels { get; set; } = new List<RoomModel>();
 
@@ -120,6 +123,12 @@ namespace ChatApp.Client.Models
                 new CreateRoom() { RoomName = roomName, UserIds = userEmails });
 
             await GetUserBelongedRoomsAsync(authenticationStateProvider);
+        }
+
+        public ChatModel ChatModelFactory(HubUtility hubUtility)
+        {
+            _chatModel ??= new ChatModel(_httpClientFactory, hubUtility);
+            return _chatModel;
         }
     }
 }

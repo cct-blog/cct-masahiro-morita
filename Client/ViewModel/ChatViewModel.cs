@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
+using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -18,6 +19,8 @@ namespace ChatApp.Client.ViewModel
         private readonly ChatModel _chatModel;
 
         private readonly IndexModel _indexModel;
+
+        private readonly HubUtility _hubUtility;
 
         private Guid _roomId;
 
@@ -75,7 +78,11 @@ namespace ChatApp.Client.ViewModel
 
         public Selectable ThreadTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
-        private readonly IHttpClientFactory _httpClientFactory;
+        public ChatViewModel(IndexModel indexModel, HubUtility hubUtility)
+        {
+            _hubUtility = hubUtility;
+            _indexModel = indexModel;
+            _model = _indexModel.ChatModelFactory(_hubUtility);
 
         private readonly AuthenticationStateProvider _authenticationStateProvider;
 

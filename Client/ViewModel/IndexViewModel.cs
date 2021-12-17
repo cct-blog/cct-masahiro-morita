@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using ChatApp.Client.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 using Oniqys.Blazor.ViewModel;
 using static ChatApp.Client.Shared.MainLayout;
 
@@ -18,6 +21,7 @@ namespace ChatApp.Client.ViewModel
         private readonly AuthenticationStateProvider _authenticationStateProvider;
 
         private bool _isLoggedIn;
+
         /// <summary>
         /// ログイン状態
         /// </summary>
