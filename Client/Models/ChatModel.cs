@@ -39,18 +39,19 @@ namespace ChatApp.Client.Models
         /// <param name="httpClientFactory"></param>
         /// <param name="hubConnection"></param>
         /// <param name="roomId"></param>
-        public ChatModel(IHttpClientFactory httpClientFactory, HubConnection hubConnection, Guid roomId)
+        public ChatModel(IHttpClientFactory httpClientFactory, HubConnection hubConnection)
         {
             _httpClientFactory = httpClientFactory;
             _hubConnection = hubConnection;
-            RoomId = roomId;
+        }
 
-            Task.Run(async () =>
-            {
-                await GetAllUserAsync();
-                await GetAllRoomParticipantsAsync();
-                await GetRoomPostsAsync();
-            });
+        public async Task Initialize(Guid roomId)
+        {
+            await GetAllUserAsync();
+            await GetAllRoomParticipantsAsync();
+            await GetRoomPostsAsync();
+
+            RoomId = roomId;
 
             _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, async (message) =>
             {
@@ -122,7 +123,7 @@ namespace ChatApp.Client.Models
                 ThreadsChanged(this, threads.ToArray());
             });
 
-            _hubConnection.StartAsync();
+            await _hubConnection.StartAsync();
         }
 
         public async Task UpdateRoomModelAsync(Guid roomId)

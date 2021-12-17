@@ -160,6 +160,8 @@
 
     private string _fragment;
 
+    private Task _roomIdChanging = Task.CompletedTask;
+
     private Guid _roomId;
 
     [Parameter]
@@ -172,7 +174,8 @@
                 return;
 
             _roomId = value;
-            _hubConnection = HubUtility.CreateHubConnection();
+            _roomIdChanging = ViewModel?.InitializeAsync(this, value) ?? Task.CompletedTask;
+            StateHasChanged();
         }
     }
 
