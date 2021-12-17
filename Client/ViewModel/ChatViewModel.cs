@@ -16,7 +16,6 @@ namespace ChatApp.Client.ViewModel
     {
         private ChatModel _model;
 
-        private IndexViewModel _indexViewModel;
 
         private Guid _roomId;
 
@@ -78,6 +77,8 @@ namespace ChatApp.Client.ViewModel
         public ChatViewModel(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
+            UserList = new(null, Guid.Empty, null);
+            MessagePoster = new(null, SendMessage, null);
         }
 
         public async Task InitializeAsync(Chat.IPresenter presenter, Guid roomId)
@@ -91,17 +92,14 @@ namespace ChatApp.Client.ViewModel
 
             _roomId = roomId;
             _presenter = presenter;
-            _model = new ChatModel(_httpClientFactory, _presenter.GetHabConnection(), roomId);
-            _indexViewModel = presenter.GetIndexViewModel();
+            _model = new ChatModel(_httpClientFactory, _presenter.GetHabConnection());
+            await _model.Initialize(roomId);
 
             UserList = new(presenter, roomId, _model);
 
-            await Task.Run(async () =>
-            {
-                var user = await _presenter.GetUserAsync();
-                _userEmail = user.Id;
-                _handleName = user.Name;
-            });
+            var user = await _presenter.GetUserAsync();
+            _userEmail = user.Id;
+            _handleName = user.Name;
 
             MessagePoster = new(_presenter, SendMessage, null);
 

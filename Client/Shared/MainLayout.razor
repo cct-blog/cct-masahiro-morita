@@ -3,7 +3,6 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IHttpClientFactory HttpClientFactory
 @inject IndexViewModel ViewModel
-@implements MainLayout.IIndexPresenter
 
 <style type="text/css">
     .app-layout {
@@ -53,16 +52,9 @@
 </div>
 
 @code {
-
-    public interface IIndexPresenter
-    {
-        void Invalidate();
-    }
-
-    public void Invalidate() => StateHasChanged();
-
     protected override void OnInitialized()
     {
-        ViewModel.Initialize(this);
+        // 通常は WeakReferenceEvent を用いるべきだが、ライフサイクルが同期しているので強い参照を容認する
+        ViewModel.PropertyChanged += (_, _) => StateHasChanged();
     }
 }
