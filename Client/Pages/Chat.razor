@@ -101,7 +101,7 @@
                     }
                 }
             </div>
-            <MessageInput DataContext="ViewModel.MessagePoster" />
+            <MessageInput DataContext="@ViewModel.MessagePoster" />
             <AnchorNavigation />
         </Authorized>
     </AuthorizeView>
@@ -120,22 +120,10 @@
 
     public interface IPresenter
     {
-        NavigationManager GetNavigationManager();
-
-        IndexViewModel GetIndexViewModel();
-
-        void Invalidate();
-
         void NavigateToLast();
 
         void SetFocus(string elementId);
     }
-
-    public NavigationManager GetNavigationManager() => NavigationManager;
-
-    public IndexViewModel GetIndexViewModel() => indexViewModel;
-
-    public void Invalidate() => StateHasChanged();
 
     public void SetFocus(string elementId) => ViewModel.NextFocusElementId = elementId;
 
@@ -180,6 +168,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+        ViewModel.PropertyChanged += (s, e) => StateHasChanged();
+        ViewModel.MessagePoster.PropertyChanged += (s, e) => StateHasChanged();
         await ViewModel.InitializeAsync(this, _roomId);
     }
 

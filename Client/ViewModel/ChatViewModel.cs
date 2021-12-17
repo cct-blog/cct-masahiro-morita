@@ -41,11 +41,7 @@ namespace ChatApp.Client.ViewModel
         public string UserEmail
         {
             get => _userEmail;
-            set
-            {
-                _userEmail = value;
-                _presenter.Invalidate();
-            }
+            set => ObjectChangeProcess(ref _userEmail, value);
         }
 
         private string _handleName;
@@ -53,11 +49,7 @@ namespace ChatApp.Client.ViewModel
         public string HandleName
         {
             get => _handleName;
-            set
-            {
-                _handleName = value;
-                _presenter.Invalidate();
-            }
+            set => ObjectChangeProcess(ref _handleName, value);
         }
 
         private Chat.IPresenter _presenter;
@@ -69,67 +61,52 @@ namespace ChatApp.Client.ViewModel
         /// </summary>
         public ContentCollection<PostViewModel> ThreadPosters { get; } = new ContentCollection<PostViewModel>();
 
+        private PostViewModel _messagePoster;
         /// <summary>
         /// 親メッセージを投稿するためのViewModel
         /// </summary>
-        public PostViewModel MessagePoster { get; private set; }
+        public PostViewModel MessagePoster
+        {
+            get => _messagePoster;
+            private set => ObjectChangeProcess(ref _messagePoster, value);
+        }
 
         public Selectable UserListTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
         public Selectable ThreadTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
-        public ChatViewModel(IndexModel indexModel, HubUtility hubUtility)
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
+
+        public ChatViewModel(IndexModel indexModel, HubUtility hubUtility, AuthenticationStateProvider authenticationStateProvider, UserListViewModel userListViewModel)
         {
             _hubUtility = hubUtility;
             _indexModel = indexModel;
-            _model = _indexModel.ChatModelFactory(_hubUtility);
-
-        private readonly AuthenticationStateProvider _authenticationStateProvider;
-
-        public ChatViewModel(IHttpClientFactory httpClientFactory, IndexModel indexModel, ChatModel chatModel, AuthenticationStateProvider authenticationStateProvider)
-        {
-            _httpClientFactory = httpClientFactory;
-            _indexModel = indexModel;
-            _chatModel = chatModel;
             _authenticationStateProvider = authenticationStateProvider;
-            UserList = new(null, Guid.Empty, _indexModel, null, authenticationStateProvider);
+            _chatModel = _indexModel.ChatModelFactory(_hubUtility);
+            UserList = userListViewModel;
             MessagePoster = new(null, SendMessage, null);
-        }
 
-        public async Task InitializeAsync(Chat.IPresenter presenter, Guid roomId)
-        {
-            if (presenter is null || roomId == Guid.Empty)
-            {
-                UserList = new(null, Guid.Empty, _indexModel, null, _authenticationStateProvider);
-                MessagePoster = new(null, SendMessage, null);
-                return;
-            }
-
-            _roomId = roomId;
-            _presenter = presenter;
-            await _chatModel.Initialize(roomId);
-
-            UserList = new(presenter, roomId, _indexModel, _chatModel, _authenticationStateProvider);
-
-            var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
-            _userEmail = user.Id;
-            _handleName = user.Name;
-
-            MessagePoster = new(_presenter, SendMessage, null);
-
-            ThreadPosters.CollectionChanged += (s, e) => _presenter.Invalidate();
-            ThreadPosters.PropertyChanged += (s, e) => _presenter.Invalidate();
+            // コレクションの変更を画面に伝える
+            ThreadPosters.CollectionChanged += (s, e) => OnPropertyChanged(nameof(ThreadPosters));
+            ThreadPosters.PropertyChanged += (s, e) => OnPropertyChanged(nameof(ThreadPosters));
 
             _chatModel.PostsChanged += (s, e) => OnPostChanged(e);
             _chatModel.ThreadsChanged += (s, e) => OnThreadChanged(e);
         }
 
-        public async Task Refresh(Guid roomId)
+        public async Task InitializeAsync(Chat.IPresenter presenter, Guid roomId)
         {
             _roomId = roomId;
-            UserList = new(_presenter, roomId, _indexModel, _chatModel, _authenticationStateProvider);
-            ThreadPosters.Clear();
-            await UserList.UpdateUsers();
+            _presenter = presenter;
+            MessagePoster = new(_presenter, SendMessage, null);
+
+            await _chatModel.Initialize(roomId);
+            await UserList.InitializeAsync(_presenter, _chatModel);
+
+            var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
+            _userEmail = user.Id;
+            _handleName = user.Name;
+
         }
 
         /// <summary>
@@ -192,8 +169,7 @@ namespace ChatApp.Client.ViewModel
 
                 OnMessagePosted(message);
             }
-
-            _presenter.Invalidate();
+            OnPropertyChanged(null);
         }
 
         private void OnMessagePosted(Message message)
@@ -256,9 +232,8 @@ namespace ChatApp.Client.ViewModel
                 if (_isOpenedUserList == value)
                     return;
 
-                _isOpenedUserList = value;
                 _currentThreadId = Guid.Empty;
-                _presenter.Invalidate();
+                ValueChangeProcess(ref _isOpenedUserList, value);
             }
         }
 
@@ -276,7 +251,8 @@ namespace ChatApp.Client.ViewModel
                 _currentThreadId = value;
                 CurrentThread = ThreadPosters
                     .FirstOrDefault(each => each.ParentMessage.Id == CurrentThreadId);
-                _presenter.Invalidate();
+
+                OnPropertyChanged();
             }
         }
 
@@ -306,7 +282,7 @@ namespace ChatApp.Client.ViewModel
             poster.ThreadOpend = !poster.ThreadOpend;
             await UpdateThread(poster);
 
-            _presenter.Invalidate();
+            OnPropertyChanged(null);
         }
 
         public void OpenUserList()

@@ -50,15 +50,13 @@ namespace ChatApp.Client.Models
 
         private HubConnection _hubConnection;
 
-        private IndexModel _indexModel;
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public ChatModel(IHttpClientFactory httpClientFactory, HubUtility hubUtility, IndexModel indexModel)
+        public ChatModel(IHttpClientFactory httpClientFactory, HubUtility hubUtility)
         {
             _httpClientFactory = httpClientFactory;
             _hubUtility = hubUtility;
-            _indexModel = indexModel;
         }
 
         public async Task Initialize(Guid roomId)

@@ -32,6 +32,7 @@ namespace ChatApp.Client
             builder.Services.AddSingleton<IndexModel>();
             builder.Services.AddTransient<IndexViewModel>();
             builder.Services.AddTransient<ChatViewModel>();
+            builder.Services.AddTransient<UserListViewModel>();
 
             await builder.Build().RunAsync();
         }

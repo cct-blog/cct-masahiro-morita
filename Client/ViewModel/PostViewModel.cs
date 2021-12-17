@@ -35,13 +35,10 @@ namespace ChatApp.Client.ViewModel
 
         public PostViewModel(Chat.IPresenter presenter, Func<string, Task> sender, Message parentMessage)
         {
-            if (presenter is null || sender is null || parentMessage is null)
-                return;
-            
             _presenter = presenter;
 
-            Messages.PropertyChanged += (s, e) => _presenter.Invalidate();
-            Messages.CollectionChanged += (s, e) => _presenter.Invalidate();
+            Messages.PropertyChanged += (s, e) => OnPropertyChanged(nameof(Messages));
+            Messages.CollectionChanged += (s, e) => OnPropertyChanged(nameof(Messages));
 
             ParentMessage = parentMessage;
 
@@ -51,7 +48,7 @@ namespace ChatApp.Client.ViewModel
                 {
                     var text = InputText;
                     InputText = string.Empty;
-                    _presenter.SetFocus(TextAreaId);
+                    _presenter?.SetFocus(TextAreaId);
                     await sender(text);
                 }),
             };

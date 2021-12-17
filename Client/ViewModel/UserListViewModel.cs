@@ -7,6 +7,7 @@ using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
 using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Oniqys.Blazor.ViewModel;
 
@@ -14,13 +15,15 @@ namespace ChatApp.Client.ViewModel
 {
     public class UserListViewModel : ContentBase
     {
-        private readonly Chat.IPresenter _presenter;
-
-        private readonly ChatModel _chatModel;
-
         private readonly IndexModel _indexModel;
 
         private readonly AuthenticationStateProvider _authenticationStateProvider;
+
+        private readonly NavigationManager _navigationManager;
+
+        private ChatModel _chatModel;
+
+        private Chat.IPresenter _presenter;
 
         /// <summary>
         /// 全ユーザーと（入室中情報付き）
@@ -41,42 +44,25 @@ namespace ChatApp.Client.ViewModel
             }
         }
 
-        public async Task SetRoomId(Guid roomId)
-        {
-            RoomId = roomId;
-            await _chatModel.GetAllRoomParticipantsAsync(roomId);
-        }
-
-        private string _userEmail;
-
-        public string UserEmail
-        {
-            get => _userEmail;
-            set
-            {
-                ObjectChangeProcess(ref _userEmail, value);
-            }
-        }
-
-        public UserListViewModel(Chat.IPresenter presenter, Guid roomId, IndexModel indexModel, ChatModel chatModel, AuthenticationStateProvider authenticationStateProvider)
+        public UserListViewModel(IndexModel indexModel, AuthenticationStateProvider authenticationStateProvider, NavigationManager navigationManager)
         {
             _indexModel = indexModel;
-            _presenter = presenter;
             _authenticationStateProvider = authenticationStateProvider;
+            _navigationManager = navigationManager;
 
-            if (presenter is null || roomId == Guid.Empty || chatModel == null)
-                return;
+            // roomIdの更新によってイベントハンドラーが呼ばれる前に設定する(TODO : 弱参照化)
+            Users.PropertyChanged += (s, e) => OnPropertyChanged(nameof(Users));
+            Users.CollectionChanged += (s, e) => OnPropertyChanged(nameof(Users));
+        }
 
+        public async Task InitializeAsync(Chat.IPresenter presenter, ChatModel chatModel)
+        {
+            _presenter = presenter;
             _chatModel = chatModel;
-            // roomIdの更新によってイベントハンドラーが呼ばれる前に設定する
+            _roomId = chatModel.RoomId;
+            // roomIdの更新によってイベントハンドラーが呼ばれる前に設定する(TODO : 弱参照化)
             _chatModel.RoomParticipantsChanged += (s, e) => RoomParticipantsChanged(e);
-
-            _roomId = roomId;
-            Task.Run(async () =>
-            {
-                var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
-                _userEmail = user.Id;
-            });
+            await UpdateUsers();
         }
 
         // 画面のボタンクリックで参照
@@ -87,7 +73,7 @@ namespace ChatApp.Client.ViewModel
 
             await _indexModel.GetUserBelongedRoomsAsync(_authenticationStateProvider);
 
-            _presenter.GetNavigationManager().NavigateTo("/");
+            _navigationManager.NavigateTo("/");
         }
 
         // 画面のボタンクリックで参照
@@ -109,8 +95,7 @@ namespace ChatApp.Client.ViewModel
             {
                 var matchedUser = Users.FirstOrDefault(each => each.Content.Email == user.Email);
 
-                var isParticipate = (userInformations.FirstOrDefault(each => each.Email == user.Email) is null) ?
-                    false : true;
+                var isParticipate = userInformations.FirstOrDefault(each => each.Email == user.Email) is not null;
 
                 if (matchedUser is null)
                 {
@@ -127,8 +112,7 @@ namespace ChatApp.Client.ViewModel
                     matchedUser.IsEnabled = !isParticipate;
                 }
             }
-
-            _presenter.Invalidate();
+            OnPropertyChanged(null);
         }
     }
 }
