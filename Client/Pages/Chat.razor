@@ -9,9 +9,9 @@
 @using Oniqys.Blazor.Controls;
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
-@inject IHttpClientFactory IHttpClientFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject HubUtility HubUtility
+@inject ChatViewModel ViewModel
+
 @attribute [Authorize]
 @implements IDisposable
 @implements Chat.IPresenter
@@ -101,7 +101,7 @@
                     }
                 }
             </div>
-            <MessageInput DataContext="ViewModel.MessagePoster" />
+            <MessageInput DataContext="@ViewModel.MessagePoster" />
             <AnchorNavigation />
         </Authorized>
     </AuthorizeView>
@@ -120,51 +120,20 @@
 
     public interface IPresenter
     {
-        Task<UserInfo> GetUserAsync();
-
-        IHttpClientFactory GetHttpClientFactory();
-
-        NavigationManager GetNavigationManager();
-
-        HubConnection GetHabConnection();
-
-        IndexViewModel GetIndexViewModel();
-
-        void Invalidate();
-
         void NavigateToLast();
 
         void SetFocus(string elementId);
     }
 
-    public async Task<UserInfo> GetUserAsync()
-    {
-        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
-
-        return new() { Id = user.Identity.Name, Name = user.Claims.FirstOrDefault(each => each.Type == "HandleName")?.Value };
-    }
-
-    public IHttpClientFactory GetHttpClientFactory() => IHttpClientFactory;
-
-    public NavigationManager GetNavigationManager() => NavigationManager;
-
-    public HubConnection GetHabConnection() => _hubConnection;
-
-    public IndexViewModel GetIndexViewModel() => indexViewModel;
-
-    public void Invalidate() => StateHasChanged();
-
     public void SetFocus(string elementId) => ViewModel.NextFocusElementId = elementId;
 
     #endregion
 
-    private HubConnection _hubConnection;
-
     private string _fragment;
 
-    private Guid _roomId;
+    private Task _roomIdChanging = Task.CompletedTask;
 
-    private ChatViewModel ViewModel { get; set; } = new(null, Guid.Empty);
+    private Guid _roomId;
 
     [Parameter]
     public Guid RoomId
@@ -176,9 +145,8 @@
                 return;
 
             _roomId = value;
-            _hubConnection = HubUtility.CreateHubConnection();
-            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
-            _fragment = null;
+            _roomIdChanging = ViewModel?.InitializeAsync(this, value) ?? Task.CompletedTask;
+            StateHasChanged();
         }
     }
 
@@ -198,18 +166,20 @@
         }
     }
 
-
-    public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        if (ViewModel is null)
-            ViewModel = new ChatViewModel(this as IPresenter, _roomId);
+        await base.OnInitializedAsync();
+        ViewModel.PropertyChanged += (s, e) => StateHasChanged();
+        ViewModel.MessagePoster.PropertyChanged += (s, e) => StateHasChanged();
+        await ViewModel.InitializeAsync(this, _roomId);
     }
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
+
+        _fragment = null;
+        await ViewModel.InitializeAsync(this as IPresenter, _roomId);
 
         if (string.IsNullOrEmpty(_fragment))
             await ViewModel.RefreshAsync();
@@ -255,6 +225,5 @@
 
     public void Dispose()
     {
-        _ = _hubConnection.DisposeAsync();
     }
 }

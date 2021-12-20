@@ -1,8 +1,8 @@
 ﻿@using ChatApp.Client.ViewModel;
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IHttpClientFactory IHttpClientFactory
-@implements MainLayout.IIndexPresenter
+@inject IHttpClientFactory HttpClientFactory
+@inject IndexViewModel ViewModel
 
 <style type="text/css">
     .app-layout {
@@ -37,7 +37,7 @@
 <div class="app-layout">
     <div class="teams"></div>
     <div class="sidebar">
-        <CascadingValue Value="viewModel">
+        <CascadingValue Value="ViewModel">
             <NavMenu />
         </CascadingValue>
     </div>
@@ -45,34 +45,16 @@
         <LoginDisplay />
     </div>
     <div class="body">
-        <CascadingValue Value="viewModel">
+        <CascadingValue Value="ViewModel">
             @Body
         </CascadingValue>
     </div>
 </div>
 
 @code {
-
-    public interface IIndexPresenter
-    {
-        Task<string> GetUserIdAsync();
-
-        IHttpClientFactory GetHttpClientFactory();
-
-        void Invalidate();
-    }
-
-    public async Task<string> GetUserIdAsync()
-        => (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.Identity.Name;
-
-    public IHttpClientFactory GetHttpClientFactory() => IHttpClientFactory;
-
-    public void Invalidate() => StateHasChanged();
-
-    private IndexViewModel viewModel { get; set; }
-
     protected override void OnInitialized()
     {
-        viewModel = new((IIndexPresenter)this);
+        // 通常は WeakReferenceEvent を用いるべきだが、ライフサイクルが同期しているので強い参照を容認する
+        ViewModel.PropertyChanged += (_, _) => StateHasChanged();
     }
 }

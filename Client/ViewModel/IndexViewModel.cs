@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
+using Microsoft.AspNetCore.Components.Authorization;
+using ChatApp.Client.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 using Oniqys.Blazor.ViewModel;
 using static ChatApp.Client.Shared.MainLayout;
 
@@ -12,18 +16,40 @@ namespace ChatApp.Client.ViewModel
     {
         private readonly IndexModel _model;
 
-        public ContentCollection<RoomModel> Rooms = new();
+        public ContentCollection<RoomModel> Rooms { get; } = new();
 
-        private readonly IIndexPresenter _presenter;
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
 
-        public IndexViewModel(IIndexPresenter presenter)
+        private bool _isLoggedIn;
+
+        /// <summary>
+        /// ログイン状態
+        /// </summary>
+        public bool IsLoggedIn
         {
-            if (presenter is null) return;
+            get => _isLoggedIn;
+            set
+            {
+                if (ValueChangeProcess(ref _isLoggedIn, value) && value)
+                {
+                    InitializeRoomList();
+                }
+            }
+        }
 
-            _presenter = presenter;
-            _model = new IndexModel(_presenter.GetHttpClientFactory());
+        public IndexViewModel(IndexModel indexModel, AuthenticationStateProvider authenticationStateProvider)
+        {
+            _model = indexModel;
+            _authenticationStateProvider = authenticationStateProvider;
+        }
 
-            _model.RoomListChanged += (s, e) => OnRoomChanged(e);
+        private void InitializeRoomList()
+        {
+            // 同期処理内で非同期処理を管理する手法。
+            Task initialized = Task.CompletedTask;
+
+            _model.RoomListChanged += async (s, e) => { await initialized; OnRoomChanged(e); };
+            initialized = _model.Initialize(_authenticationStateProvider);
         }
 
         private void OnRoomChanged(RoomModel[] rooms)
@@ -56,13 +82,10 @@ namespace ChatApp.Client.ViewModel
                 Rooms.Add(target);
             }
 
-            _presenter.Invalidate();
+            OnPropertyChanged(nameof(Rooms));
         }
 
         public async Task CreateRoomAsync(string roomName, List<string> userEmails)
-            => await _model.CreateRoomAsync(roomName, userEmails);
-
-        public async Task UpdateRoomList()
-            => await _model.GetUserBelongedRoomsAsync();
+            => await _model.CreateRoomAsync(roomName, userEmails, _authenticationStateProvider);
     }
 }

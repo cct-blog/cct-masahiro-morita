@@ -1,30 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
+using ChatApp.Client.Services;
 using ChatApp.Shared.Models;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Oniqys.Blazor.ViewModel;
 
 namespace ChatApp.Client.ViewModel
 {
     public class ChatViewModel : ContentBase
     {
-        private readonly ChatModel _model;
+        private readonly ChatModel _chatModel;
 
-        private readonly IndexViewModel _indexViewModel;
+        private readonly IndexModel _indexModel;
+
+        private readonly HubUtility _hubUtility;
 
         private Guid _roomId;
+
+        private Task _updating = Task.CompletedTask;
 
         public Guid RoomId
         {
             get => _roomId;
             set
             {
-                Task.Run(async () => await _model.UpdateRoomModelAsync(value));
-                UserList.RoomId = value;
+                _updating = _chatModel.UpdateRoomModelAsync(value);
                 ValueChangeProcess(ref _roomId, value);
             }
         }
@@ -34,11 +41,7 @@ namespace ChatApp.Client.ViewModel
         public string UserEmail
         {
             get => _userEmail;
-            set
-            {
-                _userEmail = value;
-                _presenter.Invalidate();
-            }
+            set => ObjectChangeProcess(ref _userEmail, value);
         }
 
         private string _handleName;
@@ -46,14 +49,10 @@ namespace ChatApp.Client.ViewModel
         public string HandleName
         {
             get => _handleName;
-            set
-            {
-                _handleName = value;
-                _presenter.Invalidate();
-            }
+            set => ObjectChangeProcess(ref _handleName, value);
         }
 
-        private readonly Chat.IPresenter _presenter;
+        private Chat.IPresenter _presenter;
 
         public UserListViewModel UserList { get; set; }
 
@@ -62,53 +61,52 @@ namespace ChatApp.Client.ViewModel
         /// </summary>
         public ContentCollection<PostViewModel> ThreadPosters { get; } = new ContentCollection<PostViewModel>();
 
+        private PostViewModel _messagePoster;
         /// <summary>
         /// 親メッセージを投稿するためのViewModel
         /// </summary>
-        public PostViewModel MessagePoster { get; }
+        public PostViewModel MessagePoster
+        {
+            get => _messagePoster;
+            private set => ObjectChangeProcess(ref _messagePoster, value);
+        }
 
         public Selectable UserListTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
         public Selectable ThreadTabOpened { get; } = new() { IsSelected = false, IsEnabled = true };
 
-        public ChatViewModel(Chat.IPresenter presenter, Guid roomId)
+        private readonly AuthenticationStateProvider _authenticationStateProvider;
+
+        public ChatViewModel(IndexModel indexModel, HubUtility hubUtility, AuthenticationStateProvider authenticationStateProvider, UserListViewModel userListViewModel)
         {
-            if (presenter is null || roomId == Guid.Empty)
-            {
-                UserList = new(null, Guid.Empty, null);
-                MessagePoster = new(null, SendMessage, null);
-                return;
-            }
+            _hubUtility = hubUtility;
+            _indexModel = indexModel;
+            _authenticationStateProvider = authenticationStateProvider;
+            _chatModel = _indexModel.ChatModelFactory(_hubUtility);
+            UserList = userListViewModel;
+            MessagePoster = new(null, SendMessage, null);
 
-            _roomId = roomId;
-            _presenter = presenter;
-            _model = new ChatModel(_presenter.GetHttpClientFactory(), _presenter.GetHabConnection(), roomId);
-            _indexViewModel = presenter.GetIndexViewModel();
+            // コレクションの変更を画面に伝える
+            ThreadPosters.CollectionChanged += (s, e) => OnPropertyChanged(nameof(ThreadPosters));
+            ThreadPosters.PropertyChanged += (s, e) => OnPropertyChanged(nameof(ThreadPosters));
 
-            UserList = new(presenter, roomId, _model);
-
-            Task.Run(async () =>
-            {
-                var user = await _presenter.GetUserAsync();
-                _userEmail = user.Id;
-                _handleName = user.Name;
-            });
-
-            MessagePoster = new(_presenter, SendMessage, null);
-
-            ThreadPosters.CollectionChanged += (s, e) => _presenter.Invalidate();
-            ThreadPosters.PropertyChanged += (s, e) => _presenter.Invalidate();
-
-            _model.PostsChanged += (s, e) => OnPostChanged(e);
-            _model.ThreadsChanged += (s, e) => OnThreadChanged(e);
+            _chatModel.PostsChanged += (s, e) => OnPostChanged(e);
+            _chatModel.ThreadsChanged += (s, e) => OnThreadChanged(e);
         }
 
-        public async Task Refresh(Guid roomId)
+        public async Task InitializeAsync(Chat.IPresenter presenter, Guid roomId)
         {
             _roomId = roomId;
-            UserList = new(_presenter, roomId, _model);
-            ThreadPosters.Clear();
-            await UserList.UpdateUsers();
+            _presenter = presenter;
+            MessagePoster = new(_presenter, SendMessage, null);
+
+            await _chatModel.Initialize(roomId);
+            await UserList.InitializeAsync(_presenter, _chatModel);
+
+            var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
+            _userEmail = user.Id;
+            _handleName = user.Name;
+
         }
 
         /// <summary>
@@ -116,7 +114,7 @@ namespace ChatApp.Client.ViewModel
         /// </summary>
         private async Task SendMessage(string text)
         {
-            var user = await _presenter.GetUserAsync();
+            var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
 
             var message = new Message()
             {
@@ -127,7 +125,7 @@ namespace ChatApp.Client.ViewModel
                 RoomId = _roomId
             };
 
-            await _model.SendMessageAsync(message);
+            await _chatModel.SendMessageAsync(message);
         }
 
         /// <summary>
@@ -135,7 +133,7 @@ namespace ChatApp.Client.ViewModel
         /// </summary>
         private async Task SendThreadMessage(Guid postId, string text)
         {
-            var user = await _presenter.GetUserAsync();
+            var user = await _indexModel.GetUserAsync(_authenticationStateProvider);
 
             var message = new ThreadMessage()
             {
@@ -147,7 +145,7 @@ namespace ChatApp.Client.ViewModel
                 RoomId = _roomId
             };
 
-            await _model.SendThreadMessageAsync(message);
+            await _chatModel.SendThreadMessageAsync(message);
         }
 
         /// <summary>
@@ -171,8 +169,7 @@ namespace ChatApp.Client.ViewModel
 
                 OnMessagePosted(message);
             }
-
-            _presenter.Invalidate();
+            OnPropertyChanged(null);
         }
 
         private void OnMessagePosted(Message message)
@@ -221,7 +218,7 @@ namespace ChatApp.Client.ViewModel
         /// メッセージを更新します。
         /// </summary>
         public async Task RefreshAsync()
-            => await _model.GetRoomPostsAsync();
+            => await _chatModel.GetRoomPostsAsync();
 
         public string NextFocusElementId { get; set; }
 
@@ -235,9 +232,8 @@ namespace ChatApp.Client.ViewModel
                 if (_isOpenedUserList == value)
                     return;
 
-                _isOpenedUserList = value;
                 _currentThreadId = Guid.Empty;
-                _presenter.Invalidate();
+                ValueChangeProcess(ref _isOpenedUserList, value);
             }
         }
 
@@ -255,7 +251,8 @@ namespace ChatApp.Client.ViewModel
                 _currentThreadId = value;
                 CurrentThread = ThreadPosters
                     .FirstOrDefault(each => each.ParentMessage.Id == CurrentThreadId);
-                _presenter.Invalidate();
+
+                OnPropertyChanged();
             }
         }
 
@@ -277,7 +274,7 @@ namespace ChatApp.Client.ViewModel
 
         public async Task UpdateThread(PostViewModel thread)
         {
-            await _model.GetThreadMessageAsync(thread.ParentMessage.Id);
+            await _chatModel.GetThreadMessageAsync(thread.ParentMessage.Id);
         }
 
         public async Task OpenInnerThread(PostViewModel poster)
@@ -285,7 +282,7 @@ namespace ChatApp.Client.ViewModel
             poster.ThreadOpend = !poster.ThreadOpend;
             await UpdateThread(poster);
 
-            _presenter.Invalidate();
+            OnPropertyChanged(null);
         }
 
         public void OpenUserList()

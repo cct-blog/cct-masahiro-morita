@@ -13,13 +13,28 @@ namespace ChatApp.Client.Models
 {
     public class ChatModel
     {
-        public List<PostModel> PostModels { get; set; }
+        private PostModel[] _postModels;
+        public PostModel[] PostModels
+        { 
+            get => _postModels; 
+            private set
+            { 
+                _postModels = value;
+                PostsChanged?.Invoke(this, _postModels);
+            }
+        }
 
+        public UserInformation[] _roomParticipants;
         // 入室中のユーザー情報
-        public List<UserInformation> RoomParticipants { get; set; }
-
-        // すべてのユーザー
-        public List<UserInformation> AllUser { get; set; }
+        public UserInformation[] RoomParticipants 
+        { 
+            get => _roomParticipants;
+            private set
+            {
+                _roomParticipants = value;
+                RoomParticipantsChanged?.Invoke(this, _roomParticipants);
+            }
+        }
 
         public Guid RoomId { get; private set; }
 
@@ -31,27 +46,23 @@ namespace ChatApp.Client.Models
 
         private readonly IHttpClientFactory _httpClientFactory;
 
-        private readonly HubConnection _hubConnection;
+        private readonly HubUtility _hubUtility;
+
+        private HubConnection _hubConnection;
 
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        /// <param name="httpClientFactory"></param>
-        /// <param name="hubConnection"></param>
-        /// <param name="roomId"></param>
-        public ChatModel(IHttpClientFactory httpClientFactory, HubConnection hubConnection, Guid roomId)
+        public ChatModel(IHttpClientFactory httpClientFactory, HubUtility hubUtility)
         {
             _httpClientFactory = httpClientFactory;
-            _hubConnection = hubConnection;
-            RoomId = roomId;
+            _hubUtility = hubUtility;
+        }
 
-            Task.Run(async () =>
-            {
-                await GetAllUserAsync();
-                await GetAllRoomParticipantsAsync();
-                await GetRoomPostsAsync();
-            });
-
+        public async Task Initialize(Guid roomId)
+        {
+            await UpdateRoomModelAsync(roomId);
+            _hubConnection = _hubUtility.CreateHubConnection();
             _hubConnection.On<Message>(SignalRMehod.ReceiveMessage, async (message) =>
             {
                 if (message.RoomId != RoomId)
@@ -80,10 +91,7 @@ namespace ChatApp.Client.Models
                             UpdateDate = threadMessage.UpdateDate
                         }).ToList()
                 };
-
-                PostModels.Add(postModel);
-
-                PostsChanged(this, PostModels.ToArray());
+                PostModels = PostModels.Append(postModel).ToArray();
             });
 
             _hubConnection.On<ThreadMessage>(SignalRMehod.SendThreadMessage, (message) =>
@@ -122,25 +130,14 @@ namespace ChatApp.Client.Models
                 ThreadsChanged(this, threads.ToArray());
             });
 
-            _hubConnection.StartAsync();
+            await _hubConnection.StartAsync();
         }
 
         public async Task UpdateRoomModelAsync(Guid roomId)
         {
             RoomId = roomId;
-            await GetAllUserAsync();
-            await GetAllRoomParticipantsAsync();
+            await GetAllRoomParticipantsAsync(roomId);
             await GetRoomPostsAsync();
-        }
-
-        /// <summary>
-        /// サービスに登録しているすべてのユーザーを取得する
-        /// </summary>
-        /// <returns></returns>
-        public async Task GetAllUserAsync()
-        {
-            var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
-            AllUser = await client.GetFromJsonAsync<List<UserInformation>>("User");
         }
 
         /// <summary>
@@ -148,12 +145,12 @@ namespace ChatApp.Client.Models
         /// </summary>
         /// <param name="roomId"></param>
         /// <returns></returns>
-        public async Task GetAllRoomParticipantsAsync()
+        public async Task GetAllRoomParticipantsAsync(Guid roomId)
         {
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
-            var roomDetail = await client.GetFromJsonAsync<RoomDetail>($"Room/{RoomId}");
+            var roomDetail = await client.GetFromJsonAsync<RoomDetail>($"Room/{roomId}");
 
-            RoomParticipants = roomDetail.Users;
+            RoomParticipants = roomDetail.Users.ToArray();
 
             RoomParticipantsChanged?.Invoke(this, RoomParticipants.ToArray());
         }
@@ -202,9 +199,7 @@ namespace ChatApp.Client.Models
                 };
             }));
 
-            PostModels = postModelTask.ToList();
-
-            PostsChanged?.Invoke(this, PostModels.ToArray());
+            PostModels = postModelTask;
         }
 
         /// <summary>
@@ -216,9 +211,7 @@ namespace ChatApp.Client.Models
         {
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             var response = await RoomUtility.AddUsersToRoom(RoomId, userEmails, client);
-            RoomParticipants = response.Users;
-
-            RoomParticipantsChanged?.Invoke(this, RoomParticipants.ToArray());
+            RoomParticipants = response.Users.ToArray();
         }
 
         /// <summary>
@@ -230,9 +223,7 @@ namespace ChatApp.Client.Models
         {
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             var response = await RoomUtility.DeleteUserFromRoom(RoomId, userEmails, client);
-            RoomParticipants = response.Users;
-
-            RoomParticipantsChanged?.Invoke(this, RoomParticipants.ToArray());
+            RoomParticipants = response.Users.ToArray();
         }
 
         /// <summary>
@@ -257,9 +248,7 @@ namespace ChatApp.Client.Models
 
             var deletedMessage = PostModels.FirstOrDefault(postModel => postModel.PostId == postId);
 
-            PostModels.Remove(deletedMessage);
-
-            PostsChanged?.Invoke(this, PostModels.ToArray());
+            PostModels = PostModels.Where(postModel => postModel.PostId == postId).ToArray();
         }
 
         /// <summary>
@@ -271,6 +260,7 @@ namespace ChatApp.Client.Models
         public async Task ChangeMessageAsync(Guid postId, string newMessage)
         {
             var post = PostModels.FirstOrDefault(post => post.PostId == postId);
+            if (post == null) return;
 
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             var result = await client.PutAsJsonAsync($"Post/{postId}", new ChatPostUpdateRequest() { Text = newMessage });
@@ -286,6 +276,7 @@ namespace ChatApp.Client.Models
         public async Task GetThreadMessageAsync(Guid postId)
         {
             var threads = PostModels.FirstOrDefault(post => post.PostId == postId)?.ThreadModels;
+            if(threads == null) return;
 
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             var result = await client.GetFromJsonAsync<List<ThreadMessage>>("Thread/Post/" + postId.ToString());
@@ -328,6 +319,7 @@ namespace ChatApp.Client.Models
         public async Task DeleteThreadMessageAsync(Guid postId, Guid threadId)
         {
             var threads = PostModels.FirstOrDefault(post => post.PostId == postId).ThreadModels;
+            if (threads == null) return;
 
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             await client.DeleteAsync($"Thread/{threadId}");
@@ -343,12 +335,14 @@ namespace ChatApp.Client.Models
             var thread = PostModels.FirstOrDefault(post => post.PostId == message.PostId).ThreadModels
                 .FirstOrDefault(thread => thread.ThreadId == message.ThreadId);
 
+            if (thread == null) return;
+
             var client = _httpClientFactory.CreateClient("ChatApp.ServerAPI");
             await client.PutAsJsonAsync("Thread", message);
 
             thread.MessageContext = message.MessageContext;
 
-            ThreadsChanged(this, new ThreadModel[] { thread });
+            ThreadsChanged?.Invoke(this, new ThreadModel[] { thread });
         }
     }
 }

@@ -5,8 +5,11 @@
 
 <div class="form-group margin-left input">
     <div class="row margin">
-        <textarea class="col margin inputbox" @bind=@DataContext.InputText @bind:event="oninput" @onkeydown=@OnKeyDown id="@DataContext.TextAreaId" />
-        <Button Class="col-md-auto margin btn btn-primary" Context="button_context" DataContext="DataContext.MessageSender">送信(Alt+Enter)</Button>
+        @if (DataContext != null)
+        {
+            <textarea class="col margin inputbox" @bind=@DataContext.InputText @bind:event="oninput" @onkeydown=@OnKeyDown id="@DataContext.TextAreaId" />
+            <Button Class="col-md-auto margin btn btn-primary" Context="button_context" DataContext="@DataContext.MessageSender">送信(Alt+Enter)</Button>
+        }
     </div>
 </div>
 
@@ -15,10 +18,16 @@
     {
         if (e.AltKey && (e.Code == "Enter" || e.Code == "NumpadEnter"))
         {
-            if (string.IsNullOrWhiteSpace(DataContext.InputText))
+            if (string.IsNullOrWhiteSpace(DataContext?.InputText))
                 return;
 
             await DataContext.MessageSender.Command.Execute();
         }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        DataContext.PropertyChanged += (s, e) => StateHasChanged();
     }
 }
