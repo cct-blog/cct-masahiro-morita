@@ -1,4 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@using ChatApp.Client.ViewModel;
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IHttpClientFactory HttpClientFactory
+@inject IndexViewModel ViewModel
 
 <style type="text/css">
     .app-layout {
@@ -33,12 +37,24 @@
 <div class="app-layout">
     <div class="teams"></div>
     <div class="sidebar">
-        <NavMenu />
+        <CascadingValue Value="ViewModel">
+            <NavMenu />
+        </CascadingValue>
     </div>
     <div class="header .main .top-row">
         <LoginDisplay />
     </div>
     <div class="body">
-        @Body
+        <CascadingValue Value="ViewModel">
+            @Body
+        </CascadingValue>
     </div>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // 通常は WeakReferenceEvent を用いるべきだが、ライフサイクルが同期しているので強い参照を容認する
+        ViewModel.PropertyChanged += (_, _) => StateHasChanged();
+    }
+}

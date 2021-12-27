@@ -33,7 +33,7 @@
         else
         {
             <div class="rounded border border-dark bg-dark text-white">
-                @foreach (var line in Message.MessageContext.Split("\n") ?? Enumerable.Empty<string>())
+                @foreach (var line in Message?.MessageContext?.Split("\n") ?? Enumerable.Empty<string>())
                 {
                     <div class="text-white">
                         <span class="message">@line</span>

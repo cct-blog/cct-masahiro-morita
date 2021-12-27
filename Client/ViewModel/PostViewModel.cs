@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ChatApp.Client.Models;
 using ChatApp.Client.Pages;
 using ChatApp.Shared.Models;
 using Oniqys.Blazor.ViewModel;
+using static ChatApp.Client.Pages.Chat;
 
 namespace ChatApp.Client.ViewModel
 {
@@ -25,7 +27,7 @@ namespace ChatApp.Client.ViewModel
             set => ValueChangeProcess(ref _threadOpened, value);
         }
 
-        public ContentCollection<MessageBase> Messages { get; } = new();
+        public ContentCollection<Message> Messages { get; } = new();
 
         private string _inputText;
 
@@ -35,8 +37,8 @@ namespace ChatApp.Client.ViewModel
         {
             _presenter = presenter;
 
-            Messages.PropertyChanged += (s, e) => _presenter.Invalidate();
-            Messages.CollectionChanged += (s, e) => _presenter.Invalidate();
+            Messages.PropertyChanged += (s, e) => OnPropertyChanged(nameof(Messages));
+            Messages.CollectionChanged += (s, e) => OnPropertyChanged(nameof(Messages));
 
             ParentMessage = parentMessage;
 
@@ -46,7 +48,7 @@ namespace ChatApp.Client.ViewModel
                 {
                     var text = InputText;
                     InputText = string.Empty;
-                    _presenter.SetFocus(TextAreaId);
+                    _presenter?.SetFocus(TextAreaId);
                     await sender(text);
                 }),
             };

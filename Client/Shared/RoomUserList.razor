@@ -13,3 +13,11 @@
     </div>
 </div>
 
+@code {
+    protected override Task OnInitializedAsync()
+    {
+        DataContext.PropertyChanged += (s, e) => StateHasChanged();
+
+        return base.OnInitializedAsync();
+    }
+}

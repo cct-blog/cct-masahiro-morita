@@ -7,9 +7,9 @@
 
 
 <div class="rounded border border-dark">
-    @foreach (var thread in DataContext.Messages.Cast<ThreadMessage>())
+    @foreach (var thread in DataContext.Messages)
     {
-        <div id="@thread.ThreadId" class="margin">
+        <div id="@thread.Id" class="margin">
             <PostItem Message="thread" />
         </div>
     }

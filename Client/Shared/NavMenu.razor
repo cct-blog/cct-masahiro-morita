@@ -1,10 +1,12 @@
 ﻿@using ChatApp.Shared.Models
 @using ChatApp.Shared;
+@using ChatApp.Client.Models
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Authorization
+@using ChatApp.Client.ViewModel;
 @inject NavigationManager NavigationManager
 @inject HubUtility HubUtility
-@inject HttpClient HttpClient
+@inject IHttpClientFactory IHttpClientFactory
 @inject IRoomManager RoomManager
 
 <style>
@@ -34,13 +36,19 @@
         <AuthorizeView>
             <Authorized>
                 <li class="nav-item px-3">@_mentionMessage</li>
-                @foreach (var room in rooms)
+                @if (indexViewModel is null)
                 {
-                    <li class="nav-item px-3">
-                        <NavLink class="nav-link" href=@("chat/" + room.Id) Match="NavLinkMatch.All">
-                            <span class="oi oi-document" aria-hidden="true"></span>@room.Name
-                        </NavLink>
-                    </li>
+                }
+                else
+                {
+                    @foreach (var room in indexViewModel.Rooms)
+                    {
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href=@("chat/" + room.RoomId) Match="NavLinkMatch.All">
+                                <span class="oi oi-document" aria-hidden="true"></span>@room.RoomName
+                            </NavLink>
+                        </li>
+                    }
                 }
             </Authorized>
         </AuthorizeView>
@@ -52,14 +60,15 @@
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private List<UserRoom> rooms = new List<UserRoom>();
-
     private HubConnection _hubConnection;
 
     private string _mentionMessage;
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    [CascadingParameter]
+    protected IndexViewModel indexViewModel { get; set; }
 
     private void ToggleNavMenu()
     {
@@ -68,18 +77,6 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var authState = await authenticationStateTask;
-
-        if (authState.User.Identity.IsAuthenticated)
-        {
-            RoomManager.RoomChanged += (s, e) =>
-            {
-                rooms = e;
-                StateHasChanged();
-            };
-            await UpdateRooms();
-        }
-
         _hubConnection = HubUtility.CreateHubConnection();
 
         _hubConnection.On<string>(SignalRMehod.SendMention, (string content) =>
@@ -91,12 +88,8 @@
         await _hubConnection.StartAsync();
     }
 
-    public async Task OnRoomsChanged() => await UpdateRooms();
-
-    private async Task UpdateRooms()
+    public void Dispose()
     {
-        RoomManager.RaiseRoomChanged(this, await HttpClient.GetFromJsonAsync<List<UserRoom>>("Room"));
+        _ = _hubConnection.DisposeAsync();
     }
-
-    public void Dispose() => _ = _hubConnection.DisposeAsync();
 }
